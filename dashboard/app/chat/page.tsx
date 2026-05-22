@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { API_BASE_URL, getHeaders } from "@/lib/api"
-import { MemoryAIEngine, type MemoryReference as AIMemoryRef } from "@/lib/memory-ai-engine"
 
 interface ChatMessage {
     role: "user" | "assistant"
@@ -32,52 +31,6 @@ export default function ChatPage() {
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 0)
     }, [messages.length])
 
-    const queryMemories = async (query: string): Promise<MemoryReference[]> => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/memory/query`, {
-                method: "POST",
-                headers: getHeaders(),
-                body: JSON.stringify({
-                    query,
-                    k: 10,
-                    filters: {}
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error("Failed to query memories")
-            }
-
-            const data = await response.json()
-            const raw: MemoryReference[] = data.matches.map((match: any) => ({
-                id: match.id,
-                sector: match.primary_sector || "semantic",
-                content: match.content,
-                salience: match.salience || match.score || 0,
-                title: match.content.substring(0, 50) + (match.content.length > 50 ? "..." : ""),
-                last_seen_at: match.last_seen_at
-            }))
-            return raw
-        } catch (error) {
-            console.error("Error querying memories:", error)
-            return []
-        }
-    }
-
-    const generateResponse = async (userQuery: string, relevantMemories: MemoryReference[]): Promise<string> => {
-        const aiMemories: AIMemoryRef[] = relevantMemories.map(m => ({
-            id: m.id,
-            sector: m.sector,
-            content: m.content,
-            salience: m.salience,
-            title: m.title,
-            last_seen_at: m.last_seen_at,
-            score: (m as any).score
-        }))
-
-        return await MemoryAIEngine.generateResponse(userQuery, aiMemories)
-    }
-
     const sendMessage = async () => {
         if (!input.trim() || busy) return
 
@@ -87,6 +40,8 @@ export default function ChatPage() {
             timestamp: Date.now()
         }
 
+        const history = messages.map(m => ({ role: m.role, content: m.content }))
+
         setMessages(prev => [...prev, userMessage])
         const currentInput = input
         setInput("")
@@ -94,24 +49,39 @@ export default function ChatPage() {
         setBusy(true)
 
         try {
-            const relevantMemories = await queryMemories(currentInput)
-            setMemories(relevantMemories)
-            const responseContent = await generateResponse(currentInput, relevantMemories)
+            const response = await fetch(`${API_BASE_URL}/memory/chat`, {
+                method: "POST",
+                headers: getHeaders(),
+                body: JSON.stringify({ message: currentInput, history }),
+            })
 
-            const assistantMessage: ChatMessage = {
-                role: "assistant",
-                content: responseContent,
-                timestamp: Date.now()
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}))
+                throw new Error(err.detail || err.err || `HTTP ${response.status}`)
             }
-            setMessages(prev => [...prev, assistantMessage])
-        } catch (error) {
-            console.error("Error processing message:", error)
-            const errorMessage: ChatMessage = {
+
+            const data = await response.json()
+
+            setMemories((data.memories_used || []).map((m: any) => ({
+                id: m.id,
+                sector: m.sector,
+                content: m.content,
+                salience: m.score,
+                title: m.content.substring(0, 50) + (m.content.length > 50 ? "..." : ""),
+            })))
+
+            setMessages(prev => [...prev, {
                 role: "assistant",
-                content: "I encountered an error while processing your message. Please make sure the Memos backend is running on port 8080.",
-                timestamp: Date.now()
-            }
-            setMessages(prev => [...prev, errorMessage])
+                content: data.reply,
+                timestamp: Date.now(),
+            }])
+        } catch (error: any) {
+            console.error("Error in chat:", error)
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: `Error: ${error.message || "Could not reach the backend. Make sure Memos is running on port 8080 and Ollama is running on port 11434."}`,
+                timestamp: Date.now(),
+            }])
         } finally {
             setAwaitingAnswer(false)
             setBusy(false)

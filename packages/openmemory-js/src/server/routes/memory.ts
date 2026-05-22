@@ -10,6 +10,7 @@ import { ingestDocument, ingestURL } from "../../ops/ingest";
 import { update_user_summary } from "../../memory/user_summary";
 import { require_tenant, reject_tenant_mismatch } from "../middleware/tenant";
 import { parse_or_400, schema } from "../middleware/validate";
+import { env } from "../../core/cfg";
 
 const add_schema: schema = {
     content: {
@@ -301,6 +302,71 @@ export function mem(app: any) {
         } catch (e: any) {
             console.error("[mem] /memory/all failed:", e);
             res.status(500).json({ err: "internal" });
+        }
+    });
+
+    app.post("/memory/chat", async (req: any, res: any) => {
+        const tenant = require_tenant(req, res);
+        if (!tenant) return;
+        const { message, history } = req.body || {};
+        if (!message || typeof message !== "string" || message.trim().length === 0) {
+            return res.status(400).json({ err: "message required" });
+        }
+        try {
+            const queryResult = await hsg_query(message, 8, { user_id: tenant });
+            const memories = (Array.isArray(queryResult) ? queryResult : []).slice(0, 8);
+
+            const memoryContext = memories.length > 0
+                ? memories.map((m: any, i: number) =>
+                    `[Memory ${i + 1}] (${m.primary_sector || "semantic"}, relevance: ${((m.score || m.salience || 0) * 100).toFixed(0)}%)\n${m.content}`
+                ).join("\n\n")
+                : "No relevant memories found.";
+
+            const systemPrompt = `You are a personal memory assistant. You have access to the user's stored memories below. Use them to answer questions, provide context, and have natural conversations. Be concise and helpful.
+
+STORED MEMORIES:
+${memoryContext}
+
+Answer based on these memories. If the memories don't contain relevant information, say so honestly.`;
+
+            const ollamaHistory = Array.isArray(history) ? history : [];
+            const ollamaMessages = [
+                { role: "system", content: systemPrompt },
+                ...ollamaHistory.map((h: any) => ({ role: h.role, content: h.content })),
+                { role: "user", content: message },
+            ];
+
+            const model = process.env.MEMOS_OLLAMA_CHAT_MODEL || "qwen2:1.5b";
+            const ollamaUrl = env.ollama_url;
+
+            const ollamaRes = await fetch(`${ollamaUrl}/api/chat`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model, messages: ollamaMessages, stream: false }),
+            });
+
+            if (!ollamaRes.ok) {
+                const errText = await ollamaRes.text();
+                console.error("[chat] Ollama error:", errText);
+                return res.status(502).json({ err: "ollama_error", detail: errText });
+            }
+
+            const ollamaData = await ollamaRes.json();
+            const reply = ollamaData.message?.content || "";
+
+            res.json({
+                reply,
+                memories_used: memories.map((m: any) => ({
+                    id: m.id,
+                    content: m.content,
+                    sector: m.primary_sector || "semantic",
+                    score: m.score || m.salience || 0,
+                })),
+                model,
+            });
+        } catch (e: any) {
+            console.error("[chat] error:", e);
+            res.status(500).json({ err: e.message || "internal" });
         }
     });
 
