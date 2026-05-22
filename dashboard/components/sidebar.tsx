@@ -53,7 +53,7 @@ export default function Sidebar() {
             <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 whitespace-nowrap bg-stone-800 text-stone-200 px-2 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               Memos
             </span>
-            <Image src="/logo.png" alt="Memos" width={36} height={36} className="rounded-lg" />
+            <Image src="/logo.png" alt="Memos" width={72} height={72} className="rounded-lg" />
           </div>
         </div>
 
