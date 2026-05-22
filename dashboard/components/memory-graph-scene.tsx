@@ -187,7 +187,7 @@ function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: strin
                         {/* @ts-ignore */}
                         <bufferAttribute attach="attributes-position" args={[dimPositions, 3]} />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#333333" transparent opacity={0.25} />
+                    <lineBasicMaterial color="#ffffff" transparent opacity={0.15} />
                 {/* @ts-ignore */}
                 </lineSegments>
             )}
