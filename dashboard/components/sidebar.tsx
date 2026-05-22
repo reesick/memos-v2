@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -52,9 +53,7 @@ export default function Sidebar() {
             <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 whitespace-nowrap bg-stone-800 text-stone-200 px-2 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               Memos
             </span>
-            <div className="w-9 h-9 rounded-lg bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-400 font-semibold text-sm select-none">
-              M
-            </div>
+            <Image src="/logo.png" alt="Memos" width={36} height={36} className="rounded-lg" />
           </div>
         </div>
 
