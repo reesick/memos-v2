@@ -212,7 +212,7 @@ Add to your Claude Code MCP config (`~/.claude/claude_desktop_config.json`):
   "mcpServers": {
     "memos": {
       "command": "node",
-      "args": ["D:/mem/typeshitttt-memos/OpenMemory-main/packages/openmemory-js/dist/server/index.js"],
+      "args": ["D:/mem/typeshitttt-memos/OpenMemory-main/packages/memos-js/dist/server/index.js"],
       "env": {
         "MEMOS_API_KEY": "memos-local-key",
         "MEMOS_PORT": "8080"
@@ -459,7 +459,7 @@ Since both vectors are L2-normalized, this is just a dot product — fast even a
 
 ```powershell
 # Backend (port 8080)
-cd packages/openmemory-js
+cd packages/memos-js
 npm run dev
 
 # Dashboard (port 3000)
