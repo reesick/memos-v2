@@ -175,10 +175,8 @@ function Connections({
 
             if (isHL) {
                 hl.push(...pts)
-                // color the highlight line with the src node's sector color
                 const srcNode = nodes.find(n => n.id === e.src)
                 const c = new THREE.Color(SECTOR_COLORS[srcNode?.primary_sector || ""] || "#ffffff")
-                hl.push(...pts) // duplicate handled below
                 hlC.push(c.r, c.g, c.b, c.r, c.g, c.b)
             } else if (e.weight >= 0.6) {
                 strong.push(...pts)
