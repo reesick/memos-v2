@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -53,15 +52,9 @@ export default function Sidebar() {
             <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 whitespace-nowrap bg-stone-800 text-stone-200 px-2 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               Memos
             </span>
-            <button className="rounded-full hover:bg-stone-900 hover:text-stone-200 duration-300 transition-all p-1">
-              <Image
-                src="/favicon.ico"
-                alt="logo"
-                width={36}
-                height={36}
-                className="rounded-lg"
-              />
-            </button>
+            <div className="w-9 h-9 rounded-lg bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-400 font-semibold text-sm select-none">
+              M
+            </div>
           </div>
         </div>
 
@@ -81,13 +74,9 @@ export default function Sidebar() {
         </div>
 
         <div className="h-fit flex flex-col space-y-2 items-center">
-          <Image
-            src="/favicon.ico"
-            alt="pfp"
-            width={40}
-            height={40}
-            className="rounded-lg my-1 mx-auto"
-          />
+          <div className="w-8 h-8 rounded-lg bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-500 text-xs font-medium select-none my-1">
+            U
+          </div>
         </div>
       </div>
     </aside>
