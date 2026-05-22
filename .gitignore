@@ -7,11 +7,14 @@ target/
 .pypirc
 logs
 *.log
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .next
 out
+.turbo
+.vercel
 .env.local
 coverage
 benchmark

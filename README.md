@@ -29,14 +29,15 @@ Use two PowerShell terminals.
 ### 1. Backend
 
 ```powershell
-cd D:\mem\typeshitttt-memos\OpenMemory-main\packages\openmemory-js
+cd packages\openmemory-js
 
 $env:OM_PORT="8080"
 $env:OM_TIER="hybrid"
 $env:OM_EMBEDDINGS="synthetic"
 $env:OM_METADATA_BACKEND="sqlite"
 $env:OM_VECTOR_BACKEND="sqlite"
-$env:OM_DB_PATH="D:\mem\typeshitttt-memos\OpenMemory-main\data\openmemory.sqlite"
+$root = Resolve-Path ..\..
+$env:OM_DB_PATH="$root\data\memos.sqlite"
 
 npm install
 npm run dev
@@ -51,7 +52,7 @@ Invoke-RestMethod http://localhost:8080/health
 ### 2. Dashboard
 
 ```powershell
-cd D:\mem\typeshitttt-memos\OpenMemory-main\dashboard
+cd dashboard
 
 $env:NEXT_PUBLIC_API_URL="http://localhost:8080"
 
@@ -79,7 +80,7 @@ GET  /memory/all
 
 - Run the backend before opening the dashboard.
 - The default setup uses synthetic embeddings, so no OpenAI or Gemini key is required for the local demo.
-- Data is stored in `data/openmemory.sqlite`, which is intentionally ignored by Git.
+- Data is stored in `data/memos.sqlite`, which is intentionally ignored by Git.
 
 ## Attribution
 
