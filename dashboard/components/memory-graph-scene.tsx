@@ -21,6 +21,12 @@ interface Node3D extends Memory {
     position: [number, number, number]
 }
 
+interface Edge {
+    src: string
+    dst: string
+    weight: number  // 0–1, from HSG waypoint table
+}
+
 // ── constants ─────────────────────────────────────────────────────────────────
 const SECTOR_COLORS: Record<string, string> = {
     semantic:   "#38bdf8",
@@ -38,7 +44,7 @@ const SECTOR_CENTERS: Record<string, [number, number, number]> = {
     reflective: [5,   -5,   -2],
 }
 
-// ── seeded deterministic jitter ────────────────────────────────────────────────
+// ── seeded jitter so layout is stable across renders ──────────────────────────
 function seededRandom(seed: number) {
     let s = seed
     return () => {
@@ -67,11 +73,7 @@ function computePositions(memories: Memory[]): Node3D[] {
 
 // ── single memory node ─────────────────────────────────────────────────────────
 function MemNode({
-    node,
-    selected,
-    dimmed,
-    onClick,
-    onHover,
+    node, selected, dimmed, onClick, onHover,
 }: {
     node: Node3D
     selected: boolean
@@ -113,7 +115,7 @@ function MemNode({
     )
 }
 
-// ── cluster labels via Html ────────────────────────────────────────────────────
+// ── cluster labels ─────────────────────────────────────────────────────────────
 function ClusterLabel({ sector, visible }: { sector: string; visible: boolean }) {
     const center = SECTOR_CENTERS[sector] || [0, 0, 0]
     const color = SECTOR_COLORS[sector] || "#888"
@@ -139,66 +141,112 @@ function ClusterLabel({ sector, visible }: { sector: string; visible: boolean })
     )
 }
 
-// ── connections via lineSegments ───────────────────────────────────────────────
-function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: string | null }) {
-    const pairs = useMemo(() => {
-        const result: Array<[Node3D, Node3D]> = []
-        const bySector: Record<string, Node3D[]> = {}
-        for (const n of nodes) {
-            if (!bySector[n.primary_sector]) bySector[n.primary_sector] = []
-            bySector[n.primary_sector].push(n)
-        }
-        for (const sector of Object.keys(bySector)) {
-            const sn = bySector[sector]
-            for (let i = 0; i + 1 < sn.length && result.length < 60; i++) {
-                result.push([sn[i], sn[i + 1]])
-            }
-        }
-        return result
-    }, [nodes])
+// ── real waypoint connections ──────────────────────────────────────────────────
+function Connections({
+    nodes,
+    edges,
+    selectedId,
+}: {
+    nodes: Node3D[]
+    edges: Edge[]
+    selectedId: string | null
+}) {
+    const posMap = useMemo(
+        () => new Map(nodes.map(n => [n.id, n.position])),
+        [nodes]
+    )
+    const visibleIds = useMemo(() => new Set(nodes.map(n => n.id)), [nodes])
 
-    const { dimPositions, hlPositions, hlColor } = useMemo(() => {
-        const dim: number[] = []
+    // split into: highlighted (touching selected), strong, medium, weak
+    const { hlPos, hlColors, strongPos, medPos, weakPos } = useMemo(() => {
         const hl: number[] = []
-        let hlCol = "#38bdf8"
-        for (const [a, b] of pairs) {
-            const highlighted = selectedId && (a.id === selectedId || b.id === selectedId)
-            const arr = [...a.position, ...b.position]
-            if (highlighted) {
-                hl.push(...arr)
-                hlCol = SECTOR_COLORS[a.primary_sector] || "#38bdf8"
+        const hlC: number[] = []
+        const strong: number[] = []
+        const med: number[] = []
+        const weak: number[] = []
+
+        for (const e of edges) {
+            const a = posMap.get(e.src)
+            const b = posMap.get(e.dst)
+            if (!a || !b || !visibleIds.has(e.src) || !visibleIds.has(e.dst)) continue
+
+            const pts = [...a, ...b]
+            const isHL = selectedId && (e.src === selectedId || e.dst === selectedId)
+
+            if (isHL) {
+                hl.push(...pts)
+                // color the highlight line with the src node's sector color
+                const srcNode = nodes.find(n => n.id === e.src)
+                const c = new THREE.Color(SECTOR_COLORS[srcNode?.primary_sector || ""] || "#ffffff")
+                hl.push(...pts) // duplicate handled below
+                hlC.push(c.r, c.g, c.b, c.r, c.g, c.b)
+            } else if (e.weight >= 0.6) {
+                strong.push(...pts)
+            } else if (e.weight >= 0.3) {
+                med.push(...pts)
             } else {
-                dim.push(...arr)
+                weak.push(...pts)
             }
         }
+
         return {
-            dimPositions: new Float32Array(dim),
-            hlPositions: new Float32Array(hl),
-            hlColor: hlCol,
+            hlPos: new Float32Array(hl),
+            hlColors: new Float32Array(hlC),
+            strongPos: new Float32Array(strong),
+            medPos: new Float32Array(med),
+            weakPos: new Float32Array(weak),
         }
-    }, [pairs, selectedId])
+    }, [edges, posMap, visibleIds, selectedId, nodes])
 
     return (
         <>
-            {dimPositions.length > 0 && (
+            {/* weak links */}
+            {weakPos.length > 0 && (
                 // @ts-ignore
                 <lineSegments>
                     <bufferGeometry>
                         {/* @ts-ignore */}
-                        <bufferAttribute attach="attributes-position" args={[dimPositions, 3]} />
+                        <bufferAttribute attach="attributes-position" args={[weakPos, 3]} />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#ffffff" transparent opacity={0.18} depthWrite={false} />
+                {/* @ts-ignore */}
+                </lineSegments>
+            )}
+            {/* medium links */}
+            {medPos.length > 0 && (
+                // @ts-ignore
+                <lineSegments>
+                    <bufferGeometry>
+                        {/* @ts-ignore */}
+                        <bufferAttribute attach="attributes-position" args={[medPos, 3]} />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#ffffff" transparent opacity={0.5} depthWrite={false} />
+                {/* @ts-ignore */}
+                </lineSegments>
+            )}
+            {/* strong links */}
+            {strongPos.length > 0 && (
+                // @ts-ignore
+                <lineSegments>
+                    <bufferGeometry>
+                        {/* @ts-ignore */}
+                        <bufferAttribute attach="attributes-position" args={[strongPos, 3]} />
                     </bufferGeometry>
                     <lineBasicMaterial color="#ffffff" transparent opacity={1} depthWrite={false} />
                 {/* @ts-ignore */}
                 </lineSegments>
             )}
-            {hlPositions.length > 0 && (
+            {/* highlighted links (selected node's connections) */}
+            {hlPos.length > 0 && (
                 // @ts-ignore
                 <lineSegments>
                     <bufferGeometry>
                         {/* @ts-ignore */}
-                        <bufferAttribute attach="attributes-position" args={[hlPositions, 3]} />
+                        <bufferAttribute attach="attributes-position" args={[hlPos, 3]} />
+                        {/* @ts-ignore */}
+                        <bufferAttribute attach="attributes-color" args={[hlColors, 3]} />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#ffffff" transparent opacity={1} depthWrite={false} />
+                    <lineBasicMaterial vertexColors transparent opacity={1} depthWrite={false} />
                 {/* @ts-ignore */}
                 </lineSegments>
             )}
@@ -218,14 +266,10 @@ function AutoRotate({ enabled }: { enabled: boolean }) {
 
 // ── scene ──────────────────────────────────────────────────────────────────────
 function Scene({
-    nodes,
-    selectedId,
-    setSelected,
-    search,
-    visibleSectors,
-    onHover,
+    nodes, edges, selectedId, setSelected, search, visibleSectors, onHover,
 }: {
     nodes: Node3D[]
+    edges: Edge[]
     selectedId: string | null
     setSelected: (n: Node3D | null) => void
     search: string
@@ -275,7 +319,7 @@ function Scene({
                 <ClusterLabel key={s} sector={s} visible={visibleSectors.has(s)} />
             ))}
 
-            <Connections nodes={filtered} selectedId={selectedId} />
+            <Connections nodes={filtered} edges={edges} selectedId={selectedId} />
 
             {filtered.map(node => {
                 const isSelected = node.id === selectedId
@@ -298,9 +342,30 @@ function Scene({
 }
 
 // ── info panel ─────────────────────────────────────────────────────────────────
-function InfoPanel({ node, onClose }: { node: Node3D; onClose: () => void }) {
+function InfoPanel({
+    node, edges, nodeMap, onClose,
+}: {
+    node: Node3D
+    edges: Edge[]
+    nodeMap: Map<string, Node3D>
+    onClose: () => void
+}) {
     const color = SECTOR_COLORS[node.primary_sector] || "#888"
     const age = Math.floor((Date.now() - node.created_at) / 86400000)
+
+    // find all connections for this node, sorted by weight desc
+    const connections = useMemo(() => {
+        return edges
+            .filter(e => e.src === node.id || e.dst === node.id)
+            .map(e => {
+                const otherId = e.src === node.id ? e.dst : e.src
+                const other = nodeMap.get(otherId)
+                return { other, weight: e.weight }
+            })
+            .filter(c => c.other)
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 6)
+    }, [edges, node.id, nodeMap])
 
     return (
         <div className="absolute top-4 right-4 w-80 bg-stone-950/95 border border-stone-800 rounded-2xl shadow-2xl backdrop-blur overflow-hidden">
@@ -316,18 +381,55 @@ function InfoPanel({ node, onClose }: { node: Node3D; onClose: () => void }) {
             </div>
             <div className="px-5 py-4 space-y-4">
                 <p className="text-stone-200 text-sm leading-relaxed">{node.content}</p>
-                <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                        <div className="text-xs text-stone-500 mb-1">Salience</div>
-                        <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden">
-                            <div
-                                className="h-full rounded-full transition-all duration-500"
-                                style={{ width: `${Math.round(node.salience * 100)}%`, backgroundColor: color }}
-                            />
-                        </div>
-                        <div className="text-xs text-stone-400 mt-1">{(node.salience * 100).toFixed(1)}%</div>
+
+                {/* salience bar */}
+                <div>
+                    <div className="text-xs text-stone-500 mb-1">Salience</div>
+                    <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden">
+                        <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.round(node.salience * 100)}%`, backgroundColor: color }}
+                        />
                     </div>
+                    <div className="text-xs text-stone-400 mt-1">{(node.salience * 100).toFixed(1)}%</div>
                 </div>
+
+                {/* waypoint connections */}
+                {connections.length > 0 && (
+                    <div>
+                        <div className="text-xs text-stone-500 mb-2 flex items-center gap-1">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                            </svg>
+                            {connections.length} linked memor{connections.length === 1 ? "y" : "ies"}
+                        </div>
+                        <div className="space-y-2">
+                            {connections.map(({ other, weight }, i) => {
+                                const otherColor = SECTOR_COLORS[other!.primary_sector] || "#888"
+                                const pct = Math.round(weight * 100)
+                                return (
+                                    <div key={i} className="flex items-start gap-2">
+                                        <div className="flex-shrink-0 mt-1">
+                                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: otherColor }} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-stone-300 text-xs truncate">
+                                                {other!.content.slice(0, 55)}{other!.content.length > 55 ? "…" : ""}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <div className="flex-1 h-0.5 bg-stone-800 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-stone-400 rounded-full" style={{ width: `${pct}%` }} />
+                                                </div>
+                                                <span className="text-stone-600 text-xs flex-shrink-0">{pct}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {node.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                         {node.tags.map(t => (
@@ -362,9 +464,7 @@ function Tooltip({ node }: { node: Node3D }) {
 
 // ── sector filter buttons ──────────────────────────────────────────────────────
 function SectorFilters({
-    visible,
-    counts,
-    onToggle,
+    visible, counts, onToggle,
 }: {
     visible: Set<string>
     counts: Record<string, number>
@@ -395,10 +495,34 @@ function SectorFilters({
     )
 }
 
+// ── edge strength legend ───────────────────────────────────────────────────────
+function EdgeLegend() {
+    return (
+        <div className="absolute bottom-4 right-4 bg-stone-950/80 border border-stone-900 rounded-xl px-4 py-3 text-xs text-stone-500 space-y-1.5 backdrop-blur">
+            <div className="text-stone-400 font-medium mb-2">Link strength</div>
+            {[
+                { label: "Strong  ≥ 60%", opacity: 1 },
+                { label: "Medium  30–60%", opacity: 0.5 },
+                { label: "Weak  < 30%",  opacity: 0.18 },
+            ].map(({ label, opacity }) => (
+                <div key={label} className="flex items-center gap-2">
+                    <div className="w-8 h-px" style={{ background: `rgba(255,255,255,${opacity})` }} />
+                    <span>{label}</span>
+                </div>
+            ))}
+            <div className="flex items-center gap-2 pt-1 border-t border-stone-900">
+                <div className="w-8 h-px bg-sky-400" />
+                <span className="text-stone-400">Selected connections</span>
+            </div>
+        </div>
+    )
+}
+
 // ── main ───────────────────────────────────────────────────────────────────────
 export default function MemoryGraphScene() {
     const [memories, setMemories] = useState<Memory[]>([])
     const [nodes, setNodes] = useState<Node3D[]>([])
+    const [edges, setEdges] = useState<Edge[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [selected, setSelected] = useState<Node3D | null>(null)
@@ -411,12 +535,35 @@ export default function MemoryGraphScene() {
     useEffect(() => {
         async function load() {
             try {
-                const r = await fetch(`${API_BASE_URL}/memory/all?l=500`, { headers: getHeaders() })
-                if (!r.ok) throw new Error(`${r.status}`)
-                const data = await r.json()
-                const mems: Memory[] = data.items || []
+                const [memRes, wpRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/memory/all?l=500`, { headers: getHeaders() }),
+                    fetch(`${API_BASE_URL}/dynamics/waypoints/graph`, { headers: getHeaders() }),
+                ])
+                if (!memRes.ok) throw new Error(`memories: ${memRes.status}`)
+
+                const memData = await memRes.json()
+                const mems: Memory[] = memData.items || []
                 setMemories(mems)
                 setNodes(computePositions(mems))
+
+                // build deduplicated edge list from waypoints
+                if (wpRes.ok) {
+                    const wpData = await wpRes.json()
+                    const seen = new Map<string, number>()
+                    for (const node of wpData.detailed_node_information || []) {
+                        for (const t of node.connected_targets || []) {
+                            const key = [node.node_memory_id, t.target_memory_id].sort().join("|")
+                            const existing = seen.get(key) ?? -1
+                            if (t.link_weight > existing) seen.set(key, t.link_weight)
+                        }
+                    }
+                    const edgeList: Edge[] = []
+                    for (const [key, weight] of seen) {
+                        const [src, dst] = key.split("|")
+                        edgeList.push({ src, dst, weight })
+                    }
+                    setEdges(edgeList)
+                }
             } catch (e: any) {
                 setError(e.message)
             } finally {
@@ -425,6 +572,8 @@ export default function MemoryGraphScene() {
         }
         load()
     }, [])
+
+    const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes])
 
     const sectorCounts = useMemo(() => {
         const c: Record<string, number> = {}
@@ -476,17 +625,18 @@ export default function MemoryGraphScene() {
                     <button
                         onClick={() => setSearch("")}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
-                    >
-                        ×
-                    </button>
+                    >×</button>
                 )}
             </div>
 
             <SectorFilters visible={visibleSectors} counts={sectorCounts} onToggle={toggleSector} />
 
+            {/* stats */}
             <div className="absolute bottom-4 left-4 text-xs text-stone-600 bg-stone-950/70 rounded-xl px-3 py-1.5 border border-stone-900">
-                {memories.length} memories · drag to rotate · scroll to zoom · click to inspect
+                {memories.length} memories · {edges.length} links · drag · scroll · click to inspect
             </div>
+
+            <EdgeLegend />
 
             <Canvas
                 camera={{ position: [0, 4, 22], fov: 55 }}
@@ -496,6 +646,7 @@ export default function MemoryGraphScene() {
             >
                 <Scene
                     nodes={nodes}
+                    edges={edges}
                     selectedId={selected?.id ?? null}
                     setSelected={setSelected}
                     search={search}
@@ -505,7 +656,14 @@ export default function MemoryGraphScene() {
             </Canvas>
 
             {hovered && !selected && <Tooltip node={hovered} />}
-            {selected && <InfoPanel node={selected} onClose={() => setSelected(null)} />}
+            {selected && (
+                <InfoPanel
+                    node={selected}
+                    edges={edges}
+                    nodeMap={nodeMap}
+                    onClose={() => setSelected(null)}
+                />
+            )}
         </div>
     )
 }
