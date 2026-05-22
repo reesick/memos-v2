@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SQL identifier safety helpers.
  *
  * The package allows several identifiers (database name, schema name,
@@ -26,12 +26,12 @@ const IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]{0,62}$/;
  * Pre-1.4 SQLite databases used `vectors`; we keep that as a recognized
  * legacy name but new installs (and Postgres) standardize on this.
  */
-export const DEFAULT_VECTOR_TABLE = "openmemory_vectors";
+export const DEFAULT_VECTOR_TABLE = "memos_vectors";
 
 export class UnsafeIdentifierError extends Error {
     constructor(name: string, kind: string) {
         super(
-            `[OpenMemory] Refusing to use unsafe SQL identifier for ${kind}: ${JSON.stringify(name)}. ` +
+            `[Memos] Refusing to use unsafe SQL identifier for ${kind}: ${JSON.stringify(name)}. ` +
                 `Identifiers must match /^[A-Za-z_][A-Za-z0-9_]{0,62}$/.`,
         );
         this.name = "UnsafeIdentifierError";
@@ -42,7 +42,7 @@ export class UnsafeIdentifierError extends Error {
  * Throws UnsafeIdentifierError if `name` is not a safe SQL identifier.
  * Returns the validated name unchanged so it can be used inline:
  *
- *   const t = assertSafeIdentifier(process.env.OM_PG_TABLE || "openmemory_memories", "OM_PG_TABLE");
+ *   const t = assertSafeIdentifier(process.env.MEMOS_PG_TABLE || "memos_memories", "MEMOS_PG_TABLE");
  */
 export function assertSafeIdentifier(
     name: string,

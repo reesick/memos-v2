@@ -1,5 +1,5 @@
 node_modules
-.env
+# .env is committed with safe defaults — don't ignore it
 dist
 data
 .vscode

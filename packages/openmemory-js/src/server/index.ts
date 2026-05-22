@@ -1,4 +1,4 @@
-import { server } from "./server";
+﻿import { server } from "./server";
 import { env, tier } from "../core/cfg";
 import { run_decay_process, prune_weak_waypoints } from "../memory/hsg";
 import { mcp } from "../ai/mcp";
@@ -42,9 +42,9 @@ console.log(`[CONFIG] Max Active Queries: ${env.max_active}`);
 if (env.emb_kind !== "synthetic" && (tier === "hybrid" || tier === "fast")) {
     console.warn(
         `[CONFIG] ⚠️  WARNING: Embedding configuration mismatch detected!\n` +
-            `         OM_EMBEDDINGS=${env.emb_kind} but OM_TIER=${tier}\n` +
+            `         MEMOS_EMBEDDINGS=${env.emb_kind} but MEMOS_TIER=${tier}\n` +
             `         Storage will use ${env.emb_kind} embeddings, but queries will use synthetic embeddings.\n` +
-            `         This causes semantic search to fail. Set OM_TIER=deep to fix.`,
+            `         This causes semantic search to fail. Set MEMOS_TIER=deep to fix.`,
     );
 }
 
@@ -81,7 +81,7 @@ app.use((req: any, res: any, next: any) => {
 
 app.use(authenticate_api_request);
 
-if (process.env.OM_LOG_AUTH === "true") {
+if (process.env.MEMOS_LOG_AUTH === "true") {
     app.use(log_authenticated_request);
 }
 

@@ -1,19 +1,19 @@
-# Memos Core
+﻿# Memos Core
 
 TypeScript backend for the Memos local memory workspace.
 
 ## Run
 
 ```powershell
-cd packages\openmemory-js
+cd packages\memos-js
 
-$env:OM_PORT="8080"
-$env:OM_TIER="hybrid"
-$env:OM_EMBEDDINGS="synthetic"
-$env:OM_METADATA_BACKEND="sqlite"
-$env:OM_VECTOR_BACKEND="sqlite"
+$env:MEMOS_PORT="8080"
+$env:MEMOS_TIER="hybrid"
+$env:MEMOS_EMBEDDINGS="synthetic"
+$env:MEMOS_METADATA_BACKEND="sqlite"
+$env:MEMOS_VECTOR_BACKEND="sqlite"
 $root = Resolve-Path ..\..
-$env:OM_DB_PATH="$root\data\memos.sqlite"
+$env:MEMOS_DB_PATH="$root\data\memos.sqlite"
 
 npm install
 npm run dev

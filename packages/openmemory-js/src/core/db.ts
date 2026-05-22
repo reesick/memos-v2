@@ -1,4 +1,4 @@
-import sqlite3 from "sqlite3";
+﻿import sqlite3 from "sqlite3";
 import { Pool, PoolClient } from "pg";
 import { env } from "./cfg";
 import fs from "node:fs";
@@ -80,37 +80,37 @@ function convertPlaceholders(sql: string): string {
 
 if (is_pg) {
     const ssl = resolvePgSsl(process.env);
-    const db_name_raw = process.env.OM_PG_DB || "openmemory";
-    const db_name = assertSafeIdentifier(db_name_raw, "OM_PG_DB");
+    const db_name_raw = process.env.MEMOS_PG_DB || "Memos";
+    const db_name = assertSafeIdentifier(db_name_raw, "MEMOS_PG_DB");
     const pool = (db: string) =>
         new Pool({
-            host: process.env.OM_PG_HOST,
-            port: process.env.OM_PG_PORT ? +process.env.OM_PG_PORT : undefined,
+            host: process.env.MEMOS_PG_HOST,
+            port: process.env.MEMOS_PG_PORT ? +process.env.MEMOS_PG_PORT : undefined,
             database: db,
-            user: process.env.OM_PG_USER,
-            password: process.env.OM_PG_PASSWORD,
+            user: process.env.MEMOS_PG_USER,
+            password: process.env.MEMOS_PG_PASSWORD,
             ssl,
         });
     let pg = pool(db_name);
     let cli: PoolClient | null = null;
     const sc = assertSafeIdentifier(
-        process.env.OM_PG_SCHEMA || "public",
-        "OM_PG_SCHEMA",
+        process.env.MEMOS_PG_SCHEMA || "public",
+        "MEMOS_PG_SCHEMA",
     );
     const memories_name = assertSafeIdentifier(
-        process.env.OM_PG_TABLE || "openmemory_memories",
-        "OM_PG_TABLE",
+        process.env.MEMOS_PG_TABLE || "memos_memories",
+        "MEMOS_PG_TABLE",
     );
     const vector_name = assertSafeIdentifier(
-        process.env.OM_VECTOR_TABLE || DEFAULT_VECTOR_TABLE,
-        "OM_VECTOR_TABLE",
+        process.env.MEMOS_VECTOR_TABLE || DEFAULT_VECTOR_TABLE,
+        "MEMOS_VECTOR_TABLE",
     );
     const m = `"${sc}"."${memories_name}"`;
     memories_table = m;
     const v = `"${sc}"."${vector_name}"`;
-    const w = `"${sc}"."openmemory_waypoints"`;
-    const l = `"${sc}"."openmemory_embed_logs"`;
-    const f = `"${sc}"."openmemory_memories_fts"`;
+    const w = `"${sc}"."memos_waypoints"`;
+    const l = `"${sc}"."memos_embed_logs"`;
+    const f = `"${sc}"."memos_memories_fts"`;
     const exec = async (sql: string, p: any[] = []) => {
         const c = cli || pg;
         return (await c.query(convertPlaceholders(sql), p)).rows;
@@ -187,7 +187,7 @@ if (is_pg) {
             `create table if not exists ${v}(id uuid,sector text,user_id text,project_id text,v vector,dim integer not null,primary key(id,sector))`,
         );
         await pg.query(
-            `create index if not exists openmemory_vectors_hnsw_idx on ${v} using hnsw (v vector_cosine_ops)`,
+            `create index if not exists memos_vectors_hnsw_idx on ${v} using hnsw (v vector_cosine_ops)`,
         );
         console.error(`[DB] HNSW index created on ${v} for fast ANN queries`);
         await pg.query(
@@ -197,7 +197,7 @@ if (is_pg) {
             `create table if not exists ${l}(id text primary key,model text,status text,ts bigint,err text)`,
         );
         await pg.query(
-            `create table if not exists "${sc}"."openmemory_users"(user_id text primary key,summary text,reflection_count integer default 0,created_at bigint,updated_at bigint)`,
+            `create table if not exists "${sc}"."memos_users"(user_id text primary key,summary text,reflection_count integer default 0,created_at bigint,updated_at bigint)`,
         );
         await pg.query(
             `create table if not exists "${sc}"."stats"(id serial primary key,type text not null,count integer default 1,ts bigint not null)`,
@@ -233,31 +233,31 @@ if (is_pg) {
             `create index if not exists temporal_edges_validity_idx on "${sc}"."temporal_edges"(valid_from,valid_to)`,
         );
         await pg.query(
-            `create index if not exists openmemory_memories_sector_idx on ${m}(primary_sector)`,
+            `create index if not exists memos_memories_sector_idx on ${m}(primary_sector)`,
         );
         await pg.query(
-            `create index if not exists openmemory_memories_segment_idx on ${m}(segment)`,
+            `create index if not exists memos_memories_segment_idx on ${m}(segment)`,
         );
         await pg.query(
-            `create index if not exists openmemory_memories_simhash_idx on ${m}(simhash)`,
+            `create index if not exists memos_memories_simhash_idx on ${m}(simhash)`,
         );
         await pg.query(
-            `create index if not exists openmemory_memories_user_idx on ${m}(user_id)`,
+            `create index if not exists memos_memories_user_idx on ${m}(user_id)`,
         );
         await pg.query(
-            `create index if not exists openmemory_vectors_user_idx on ${v}(user_id)`,
+            `create index if not exists memos_vectors_user_idx on ${v}(user_id)`,
         );
         await pg.query(
-            `create index if not exists openmemory_waypoints_user_idx on ${w}(user_id)`,
+            `create index if not exists memos_waypoints_user_idx on ${w}(user_id)`,
         );
         await pg.query(
-            `create index if not exists openmemory_stats_ts_idx on "${sc}"."stats"(ts)`,
+            `create index if not exists memos_stats_ts_idx on "${sc}"."stats"(ts)`,
         );
         await pg.query(
-            `create index if not exists openmemory_stats_type_idx on "${sc}"."stats"(type)`,
+            `create index if not exists memos_stats_type_idx on "${sc}"."stats"(type)`,
         );
         await pg.query(
-            `create index if not exists openmemory_stats_type_idx on "${sc}"."stats"(type)`,
+            `create index if not exists memos_stats_type_idx on "${sc}"."stats"(type)`,
         );
         ready = true;
 
@@ -280,7 +280,7 @@ if (is_pg) {
             err instanceof DbInitError
                 ? err
                 : new DbInitError(
-                      `[OpenMemory] Postgres init failed: ${(err && err.message) || err}`,
+                      `[Memos] Postgres init failed: ${(err && err.message) || err}`,
                       err,
                   );
         console.error("[DB] Init failed:", err);
@@ -469,21 +469,21 @@ if (is_pg) {
         ins_user: {
             run: (...p) =>
                 run_async(
-                    `insert into "${sc}"."openmemory_users"(user_id,summary,reflection_count,created_at,updated_at) values($1,$2,$3,$4,$5) on conflict(user_id) do update set summary=excluded.summary,reflection_count=excluded.reflection_count,updated_at=excluded.updated_at`,
+                    `insert into "${sc}"."memos_users"(user_id,summary,reflection_count,created_at,updated_at) values($1,$2,$3,$4,$5) on conflict(user_id) do update set summary=excluded.summary,reflection_count=excluded.reflection_count,updated_at=excluded.updated_at`,
                     p,
                 ),
         },
         get_user: {
             get: (user_id) =>
                 get_async(
-                    `select * from "${sc}"."openmemory_users" where user_id=$1`,
+                    `select * from "${sc}"."memos_users" where user_id=$1`,
                     [user_id],
                 ),
         },
         upd_user_summary: {
             run: (...p) =>
                 run_async(
-                    `update "${sc}"."openmemory_users" set summary=$2,reflection_count=reflection_count+1,updated_at=$3 where user_id=$1`,
+                    `update "${sc}"."memos_users" set summary=$2,reflection_count=reflection_count+1,updated_at=$3 where user_id=$1`,
                     p,
                 ),
         },
@@ -492,25 +492,25 @@ if (is_pg) {
                 await run_async(`delete from ${m}`);
                 await run_async(`delete from ${v}`);
                 await run_async(`delete from ${w}`);
-                await run_async(`delete from "${sc}"."openmemory_users"`);
+                await run_async(`delete from "${sc}"."memos_users"`);
             },
         },
     };
 } else {
     const db_path =
-        env.db_path || path.resolve(__dirname, "../../data/openmemory.sqlite");
+        env.db_path || path.resolve(__dirname, "../../data/Memos.sqlite");
     const dir = path.dirname(db_path);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const db = new sqlite3.Database(db_path);
 
     // Default vector table name now matches the Postgres backend
-    // (`openmemory_vectors`). If a deployment sets OM_VECTOR_TABLE
+    // (`memos_vectors`). If a deployment sets MEMOS_VECTOR_TABLE
     // explicitly we honor it, but only after validating it's a safe
     // SQL identifier — it gets interpolated into raw CREATE/DELETE SQL.
-    const explicit_vector_table = process.env.OM_VECTOR_TABLE;
+    const explicit_vector_table = process.env.MEMOS_VECTOR_TABLE;
     const sqlite_vector_table = assertSafeIdentifier(
         explicit_vector_table || DEFAULT_VECTOR_TABLE,
-        "OM_VECTOR_TABLE",
+        "MEMOS_VECTOR_TABLE",
     );
 
     // Backward-compat warning: pre-1.4 SQLite databases used `vectors`.
@@ -524,8 +524,8 @@ if (is_pg) {
                 if (err) return;
                 if (row && sqlite_vector_table !== LEGACY_SQLITE_VECTOR_TABLE) {
                     console.warn(
-                        `[OpenMemory][DB] Detected legacy SQLite vector table "${LEGACY_SQLITE_VECTOR_TABLE}" but the canonical default is now "${DEFAULT_VECTOR_TABLE}". ` +
-                            `Either set OM_VECTOR_TABLE=${LEGACY_SQLITE_VECTOR_TABLE} to keep using it, or run: ` +
+                        `[Memos][DB] Detected legacy SQLite vector table "${LEGACY_SQLITE_VECTOR_TABLE}" but the canonical default is now "${DEFAULT_VECTOR_TABLE}". ` +
+                            `Either set MEMOS_VECTOR_TABLE=${LEGACY_SQLITE_VECTOR_TABLE} to keep using it, or run: ` +
                             `ALTER TABLE ${LEGACY_SQLITE_VECTOR_TABLE} RENAME TO ${DEFAULT_VECTOR_TABLE};`,
                     );
                 }
@@ -918,8 +918,8 @@ export const log_maint_op = async (
         let sql: string;
         if (is_pg) {
             const sc = assertSafeIdentifier(
-                process.env.OM_PG_SCHEMA || "public",
-                "OM_PG_SCHEMA",
+                process.env.MEMOS_PG_SCHEMA || "public",
+                "MEMOS_PG_SCHEMA",
             );
             sql = `insert into "${sc}"."stats"(type,count,ts) values($1,$2,$3)`;
         } else {

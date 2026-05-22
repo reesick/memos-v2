@@ -1,4 +1,4 @@
-import { all_async } from "../core/db";
+﻿import { all_async } from "../core/db";
 import { TemporalFact, TimelineEntry } from "./types";
 
 export const get_subject_timeline = async (
@@ -110,7 +110,7 @@ export const get_changes_in_window = async (
     to: Date,
     subject?: string,
 ): Promise<TimelineEntry[]> => {
-    const from_ts = from.getTime();
+    const frMEMOS_ts = from.getTime();
     const to_ts = to.getTime();
     const conditions: string[] = [];
     const params: any[] = [];
@@ -132,16 +132,16 @@ export const get_changes_in_window = async (
     `;
 
     const rows = await all_async(sql, [
-        from_ts,
+        frMEMOS_ts,
         to_ts,
-        from_ts,
+        frMEMOS_ts,
         to_ts,
         ...params,
     ]);
     const timeline: TimelineEntry[] = [];
 
     for (const row of rows) {
-        if (row.valid_from >= from_ts && row.valid_from <= to_ts) {
+        if (row.valid_from >= frMEMOS_ts && row.valid_from <= to_ts) {
             timeline.push({
                 timestamp: new Date(row.valid_from),
                 subject: row.subject,
@@ -152,7 +152,7 @@ export const get_changes_in_window = async (
             });
         }
 
-        if (row.valid_to && row.valid_to >= from_ts && row.valid_to <= to_ts) {
+        if (row.valid_to && row.valid_to >= frMEMOS_ts && row.valid_to <= to_ts) {
             timeline.push({
                 timestamp: new Date(row.valid_to),
                 subject: row.subject,

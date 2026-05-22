@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "fs";
+﻿import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 interface model_cfg {
     [sector: string]: Record<string, string>;
@@ -88,11 +88,11 @@ const get_defaults = (): model_cfg => ({
 });
 
 export const get_model = (sector: string, provider: string): string => {
-    if (provider === "ollama" && process.env.OM_OLLAMA_MODEL) {
-        return process.env.OM_OLLAMA_MODEL;
+    if (provider === "ollama" && process.env.MEMOS_OLLAMA_MODEL) {
+        return process.env.MEMOS_OLLAMA_MODEL;
     }
-    if (provider === "openai" && process.env.OM_OPENAI_MODEL) {
-        return process.env.OM_OPENAI_MODEL;
+    if (provider === "openai" && process.env.MEMOS_OPENAI_MODEL) {
+        return process.env.MEMOS_OPENAI_MODEL;
     }
 
     const cfg = load_models();

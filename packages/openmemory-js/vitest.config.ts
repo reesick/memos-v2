@@ -1,7 +1,7 @@
-import { defineConfig } from "vitest/config";
+﻿import { defineConfig } from "vitest/config";
 
 // Tests run sequentially because the SQLite metadata backend is a shared
-// on-disk file under data/openmemory.sqlite. Running concurrently would
+// on-disk file under data/Memos.sqlite. Running concurrently would
 // race on WAL writes / DELETE FROM cleanup statements.
 export default defineConfig({
     test: {
@@ -24,10 +24,10 @@ export default defineConfig({
         // external services are needed. NODE_ENV defaults to "test".
         env: {
             NODE_ENV: "test",
-            OM_EMBEDDINGS: "synthetic",
-            OM_EMBEDDING_FALLBACK: "synthetic",
-            OM_METADATA_BACKEND: "sqlite",
-            OM_VECTOR_BACKEND: "sqlite",
+            MEMOS_EMBEDDINGS: "synthetic",
+            MEMOS_EMBEDDING_FALLBACK: "synthetic",
+            MEMOS_METADATA_BACKEND: "sqlite",
+            MEMOS_VECTOR_BACKEND: "sqlite",
         },
     },
 });

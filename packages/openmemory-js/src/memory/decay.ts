@@ -1,4 +1,4 @@
-import {
+﻿import {
     all_async,
     run_async,
     q,
@@ -61,16 +61,16 @@ const chunkz = <t>(arr: t[], k: number) => {
 };
 
 const make_decay_cfg = (): decay_cfg => ({
-    threads: parse_int(process.env.OM_DECAY_THREADS, 3),
-    cold_threshold: parse_f(process.env.OM_DECAY_COLD_THRESHOLD, 0.25),
+    threads: parse_int(process.env.MEMOS_DECAY_THREADS, 3),
+    cold_threshold: parse_f(process.env.MEMOS_DECAY_COLD_THRESHOLD, 0.25),
     reinforce_on_query: parse_bool(
-        process.env.OM_DECAY_REINFORCE_ON_QUERY,
+        process.env.MEMOS_DECAY_REINFORCE_ON_QUERY,
         true,
     ),
-    regeneration_enabled: parse_bool(process.env.OM_REGENERATION_ENABLED, true),
-    max_vec_dim: parse_int(process.env.OM_MAX_VECTOR_DIM, env.vec_dim || 1536),
-    min_vec_dim: parse_int(process.env.OM_MIN_VECTOR_DIM, 64),
-    summary_layers: clamp_i(parse_int(process.env.OM_SUMMARY_LAYERS, 3), 1, 3),
+    regeneration_enabled: parse_bool(process.env.MEMOS_REGENERATION_ENABLED, true),
+    max_vec_dim: parse_int(process.env.MEMOS_MAX_VECTOR_DIM, env.vec_dim || 1536),
+    min_vec_dim: parse_int(process.env.MEMOS_MIN_VECTOR_DIM, 64),
+    summary_layers: clamp_i(parse_int(process.env.MEMOS_SUMMARY_LAYERS, 3), 1, 3),
     lambda_hot: 0.005,
     lambda_warm: 0.02,
     lambda_cold: 0.05,

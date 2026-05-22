@@ -1,5 +1,5 @@
-/**
- * notion source for openmemory - production grade
+﻿/**
+ * notion source for Memos - production grade
  * requires: @notionhq/client
  * env vars: NOTION_API_KEY
  */

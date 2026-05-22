@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
 const fs = require('fs');
 const path = require('path');
@@ -19,12 +19,12 @@ const loadenv = () => {
 };
 loadenv();
 
-const port = process.env.OM_PORT || '8080';
-const url = process.env.OPENMEMORY_URL || `http://localhost:${port}`;
-const key = process.env.OPENMEMORY_API_KEY || process.env.OM_API_KEY || '';
+const port = process.env.MEMOS_PORT || '8080';
+const url = process.env.memos_URL || `http://localhost:${port}`;
+const key = process.env.memos_API_KEY || process.env.MEMOS_API_KEY || '';
 
 const helptext = `
-openmemory cli (opm)
+Memos cli (opm)
 
 usage: opm <command> [options]
 
@@ -47,9 +47,9 @@ options:
   -h, --help            show help
 
 env vars:
-  OPENMEMORY_URL        api url (default: http://localhost:8080)
-  OPENMEMORY_API_KEY    auth key
-  OM_API_KEY            alt auth key
+  memos_URL        api url (default: http://localhost:8080)
+  memos_API_KEY    auth key
+  MEMOS_API_KEY            alt auth key
 
 examples:
   opm add "user likes dark mode" --user u123 --tags prefs

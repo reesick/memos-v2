@@ -1,4 +1,4 @@
-import { canonical_tokens_from_text } from "./text";
+﻿import { canonical_tokens_frMEMOS_text } from "./text";
 import { env } from "../core/cfg";
 
 export interface keyword_match {
@@ -11,7 +11,7 @@ export function extract_keywords(
     text: string,
     min_length: number = 3,
 ): Set<string> {
-    const tokens = canonical_tokens_from_text(text);
+    const tokens = canonical_tokens_frMEMOS_text(text);
     const keywords = new Set<string>();
 
     for (const token of tokens) {
@@ -104,7 +104,7 @@ export async function keyword_filter_memories(
     threshold: number = 0.1,
 ): Promise<Map<string, number>> {
     const query_keywords = extract_keywords(query, env.keyword_min_length);
-    const query_terms = canonical_tokens_from_text(query);
+    const query_terms = canonical_tokens_frMEMOS_text(query);
     const scores = new Map<string, number>();
 
     for (const mem of all_memories) {
@@ -124,7 +124,7 @@ export async function keyword_filter_memories(
         );
         total_score += keyword_score * 0.8;
 
-        const content_terms = canonical_tokens_from_text(mem.content);
+        const content_terms = canonical_tokens_frMEMOS_text(mem.content);
         const bm25_score = compute_bm25_score(query_terms, content_terms);
         total_score += Math.min(1.0, bm25_score / 10) * 0.5;
 

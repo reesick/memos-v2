@@ -1,5 +1,5 @@
-/**
- * google sheets source for openmemory - production grade
+﻿/**
+ * google sheets source for Memos - production grade
  * requires: googleapis
  * env vars: GOOGLE_SERVICE_ACCOUNT_FILE or GOOGLE_CREDENTIALS_JSON
  */

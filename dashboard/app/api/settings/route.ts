@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
@@ -49,7 +49,7 @@ export async function GET() {
         if (masked.OPENAI_API_KEY) masked.OPENAI_API_KEY = '***'
         if (masked.GEMINI_API_KEY) masked.GEMINI_API_KEY = '***'
         if (masked.AWS_SECRET_ACCESS_KEY) masked.AWS_SECRET_ACCESS_KEY = "***"
-        if (masked.OM_API_KEY) masked.OM_API_KEY = '***'
+        if (masked.MEMOS_API_KEY) masked.MEMOS_API_KEY = '***'
 
         return NextResponse.json({
             exists: true,

@@ -1,11 +1,11 @@
-// Backstop for bugs that would otherwise stall the Node event loop and
+﻿// Backstop for bugs that would otherwise stall the Node event loop and
 // leave the container accepting TCP but never responding.
 declare global {
-  var __om_handlers_registered: boolean | undefined
+  var __MEMOS_handlers_registered: boolean | undefined
 }
 
-if (!globalThis.__om_handlers_registered) {
-  globalThis.__om_handlers_registered = true
+if (!globalThis.__MEMOS_handlers_registered) {
+  globalThis.__MEMOS_handlers_registered = true
 
   process.on('uncaughtException', (err) => {
     console.error('uncaughtException', err)

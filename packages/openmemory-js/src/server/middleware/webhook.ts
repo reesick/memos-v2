@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Webhook signature verification.
  *
  * Both verify functions are fail-closed: if the configured secret is
@@ -58,7 +58,7 @@ export function verify_github_signature(
  * Notion: As of 2024 Notion does not specify a public webhook signature
  * scheme for direct integrations (their automations product uses a
  * "Notion-Signature" header on outbound webhook subscriptions). We
- * implement HMAC-SHA256 over the raw body keyed by OM_NOTION_WEBHOOK_SECRET
+ * implement HMAC-SHA256 over the raw body keyed by MEMOS_NOTION_WEBHOOK_SECRET
  * with the header `x-notion-signature` carrying the hex digest. If the
  * secret is unset we fail closed.
  *

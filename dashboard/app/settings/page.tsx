@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 
@@ -12,206 +12,206 @@ type SettingInfo = {
 }
 
 const SETTING_METADATA: Record<string, SettingInfo> = {
-    OM_PORT: {
+    MEMOS_PORT: {
         category: 'Server',
         label: 'API Port',
         description: 'Port number for the backend server',
         type: 'number',
         placeholder: '8080'
     },
-    OM_API_KEY: {
+    MEMOS_API_KEY: {
         category: 'Server',
         label: 'API Key',
         description: 'Secret key for API authentication. Generate with: openssl rand -base64 32. Leave empty to disable auth (dev only)',
         type: 'password',
         placeholder: 'your-secret-api-key-here'
     },
-    OM_RATE_LIMIT_ENABLED: {
+    MEMOS_RATE_LIMIT_ENABLED: {
         category: 'Server',
         label: 'Rate Limiting',
         description: 'Enable rate limiting to prevent abuse',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_RATE_LIMIT_WINDOW_MS: {
+    MEMOS_RATE_LIMIT_WINDOW_MS: {
         category: 'Server',
         label: 'Rate Limit Window (ms)',
         description: 'Time window in milliseconds (default: 60000 = 1 minute)',
         type: 'number',
         placeholder: '60000'
     },
-    OM_RATE_LIMIT_MAX_REQUESTS: {
+    MEMOS_RATE_LIMIT_MAX_REQUESTS: {
         category: 'Server',
         label: 'Max Requests per Window',
         description: 'Maximum requests allowed per time window (default: 100 requests/min)',
         type: 'number',
         placeholder: '100'
     },
-    OM_LOG_AUTH: {
+    MEMOS_LOG_AUTH: {
         category: 'Server',
         label: 'Log Authentication',
         description: 'Log all authenticated requests (useful for debugging)',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_MODE: {
+    MEMOS_MODE: {
         category: 'Server',
         label: 'Server Mode',
         description: 'Operating mode: standard (default) or langgraph',
         type: 'select',
         options: ['standard', 'langgraph']
     },
-    OM_METADATA_BACKEND: {
+    MEMOS_METADATA_BACKEND: {
         category: 'Database',
         label: 'Metadata Backend',
         description: 'Storage backend for memory metadata',
         type: 'select',
         options: ['sqlite', 'postgres']
     },
-    OM_DB_PATH: {
+    MEMOS_DB_PATH: {
         category: 'Database',
         label: 'SQLite Database Path',
         description: 'File path for SQLite database',
         type: 'text',
         placeholder: './data/memos.sqlite'
     },
-    OM_PG_HOST: {
+    MEMOS_PG_HOST: {
         category: 'Database',
         label: 'PostgreSQL Host',
         description: 'PostgreSQL server hostname',
         type: 'text',
         placeholder: 'localhost'
     },
-    OM_PG_PORT: {
+    MEMOS_PG_PORT: {
         category: 'Database',
         label: 'PostgreSQL Port',
         description: 'PostgreSQL server port',
         type: 'number',
         placeholder: '5432'
     },
-    OM_PG_DB: {
+    MEMOS_PG_DB: {
         category: 'Database',
         label: 'PostgreSQL Database',
         description: 'PostgreSQL database name',
         type: 'text',
         placeholder: 'memos'
     },
-    OM_PG_USER: {
+    MEMOS_PG_USER: {
         category: 'Database',
         label: 'PostgreSQL User',
         description: 'PostgreSQL username',
         type: 'text',
         placeholder: 'postgres'
     },
-    OM_PG_PASSWORD: {
+    MEMOS_PG_PASSWORD: {
         category: 'Database',
         label: 'PostgreSQL Password',
         description: 'PostgreSQL password',
         type: 'password'
     },
-    OM_PG_SCHEMA: {
+    MEMOS_PG_SCHEMA: {
         category: 'Database',
         label: 'PostgreSQL Schema',
         description: 'PostgreSQL schema name',
         type: 'text',
         placeholder: 'public'
     },
-    OM_PG_TABLE: {
+    MEMOS_PG_TABLE: {
         category: 'Database',
         label: 'PostgreSQL Table',
         description: 'Table name for storing memories',
         type: 'text',
         placeholder: 'memos_memories'
     },
-    OM_PG_SSL: {
+    MEMOS_PG_SSL: {
         category: 'Database',
         label: 'PostgreSQL SSL',
         description: 'SSL mode for PostgreSQL connection',
         type: 'select',
         options: ['disable', 'require']
     },
-    OM_VECTOR_BACKEND: {
+    MEMOS_VECTOR_BACKEND: {
         category: 'Vectors',
         label: 'Vector Store Backend',
         description: 'Storage backend for vector embeddings',
         type: 'select',
         options: ['sqlite', 'pgvector', 'weaviate']
     },
-    OM_VECTOR_TABLE: {
+    MEMOS_VECTOR_TABLE: {
         category: 'Vectors',
         label: 'Vector Table Name',
         description: 'Table name for storing vectors',
         type: 'text',
         placeholder: 'memos_vectors'
     },
-    OM_WEAVIATE_URL: {
+    MEMOS_WEAVIATE_URL: {
         category: 'Vectors',
         label: 'Weaviate URL',
         description: 'Weaviate server URL (if using Weaviate)',
         type: 'text'
     },
-    OM_WEAVIATE_API_KEY: {
+    MEMOS_WEAVIATE_API_KEY: {
         category: 'Vectors',
         label: 'Weaviate API Key',
         description: 'Authentication key for Weaviate',
         type: 'password'
     },
-    OM_WEAVIATE_CLASS: {
+    MEMOS_WEAVIATE_CLASS: {
         category: 'Vectors',
         label: 'Weaviate Class',
         description: 'Weaviate class name',
         type: 'text',
         placeholder: 'Memos'
     },
-    OM_EMBEDDINGS: {
+    MEMOS_EMBEDDINGS: {
         category: 'Embeddings',
         label: 'Embedding Provider',
         description: 'AI provider for generating embeddings (used in SMART/DEEP tiers)',
         type: 'select',
         options: ['openai', 'gemini', 'aws', 'ollama', 'local', 'synthetic']
     },
-    OM_VEC_DIM: {
+    MEMOS_VEC_DIM: {
         category: 'Embeddings',
         label: 'Vector Dimension',
         description: 'Auto-tuned by tier (FAST: 256, SMART: 384, DEEP: 1536). Override if needed',
         type: 'number'
     },
-    OM_EMBED_MODE: {
+    MEMOS_EMBED_MODE: {
         category: 'Embeddings',
         label: 'Embedding Mode',
         description: 'simple: 1 unified batch (faster, recommended) | advanced: 5 separate sector calls (higher precision)',
         type: 'select',
         options: ['simple', 'advanced']
     },
-    OM_ADV_EMBED_PARALLEL: {
+    MEMOS_ADV_EMBED_PARALLEL: {
         category: 'Embeddings',
         label: 'Parallel Embeddings',
         description: 'Enable parallel embedding (not recommended for Gemini due to rate limits)',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_EMBED_DELAY_MS: {
+    MEMOS_EMBED_DELAY_MS: {
         category: 'Embeddings',
         label: 'Embed Delay (ms)',
         description: 'Delay between embeddings in advanced mode',
         type: 'number',
         placeholder: '200'
     },
-    OM_OPENAI_BASE_URL: {
+    MEMOS_OPENAI_BASE_URL: {
         category: 'Embeddings',
         label: 'OpenAI Base URL',
         description: 'Custom OpenAI-compatible API endpoint',
         type: 'text',
         placeholder: 'https://api.openai.com/v1'
     },
-    OM_OPENAI_MODEL: {
+    MEMOS_OPENAI_MODEL: {
         category: 'Embeddings',
         label: 'OpenAI Model Override',
         description: 'Override default embedding model for all sectors',
         type: 'text',
         placeholder: 'text-embedding-3-small'
     },
-    OM_MAX_PAYLOAD_SIZE: {
+    MEMOS_MAX_PAYLOAD_SIZE: {
         category: 'Embeddings',
         label: 'Max Payload Size (bytes)',
         description: 'Maximum request body size',
@@ -267,173 +267,173 @@ const SETTING_METADATA: Record<string, SettingInfo> = {
         type: 'text',
         placeholder: '/path/to/model'
     },
-    OM_TIER: {
+    MEMOS_TIER: {
         category: 'Performance',
         label: 'Performance Tier',
         description: 'HYBRID: 100% accuracy keyword matching | FAST: 256-dim synthetic (70-75% recall) | SMART: 384-dim hybrid (85% recall) | DEEP: 1536-dim full AI (95-100% recall). Must be set manually',
         type: 'select',
         options: ['hybrid', 'fast', 'smart', 'deep']
     },
-    OM_KEYWORD_BOOST: {
+    MEMOS_KEYWORD_BOOST: {
         category: 'Performance',
         label: 'Keyword Boost (HYBRID)',
         description: 'Multiplier for keyword match scores in HYBRID tier (default: 2.5)',
         type: 'number',
         placeholder: '2.5'
     },
-    OM_KEYWORD_MIN_LENGTH: {
+    MEMOS_KEYWORD_MIN_LENGTH: {
         category: 'Performance',
         label: 'Min Keyword Length (HYBRID)',
         description: 'Minimum length for keyword matching in HYBRID tier (default: 3)',
         type: 'number',
         placeholder: '3'
     },
-    OM_MIN_SCORE: {
+    MEMOS_MIN_SCORE: {
         category: 'Memory',
         label: 'Minimum Score',
         description: 'Minimum similarity score for memory retrieval',
         type: 'number',
         placeholder: '0.3'
     },
-    OM_DECAY_THREADS: {
+    MEMOS_DECAY_THREADS: {
         category: 'Memory',
         label: 'Decay Threads',
         description: 'Number of parallel decay worker threads',
         type: 'number',
         placeholder: '3'
     },
-    OM_DECAY_COLD_THRESHOLD: {
+    MEMOS_DECAY_COLD_THRESHOLD: {
         category: 'Memory',
         label: 'Cold Threshold',
         description: 'Memories below this salience get fingerprinted (0-1)',
         type: 'number',
         placeholder: '0.25'
     },
-    OM_DECAY_REINFORCE_ON_QUERY: {
+    MEMOS_DECAY_REINFORCE_ON_QUERY: {
         category: 'Memory',
         label: 'Reinforce on Query',
         description: 'Boost memory salience when accessed',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_REGENERATION_ENABLED: {
+    MEMOS_REGENERATION_ENABLED: {
         category: 'Memory',
         label: 'Regeneration Enabled',
         description: 'Restore cold memories when queried',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_MAX_VECTOR_DIM: {
+    MEMOS_MAX_VECTOR_DIM: {
         category: 'Memory',
         label: 'Max Vector Dimensions',
         description: 'Maximum vector dimensions before compression',
         type: 'number',
         placeholder: '1536'
     },
-    OM_MIN_VECTOR_DIM: {
+    MEMOS_MIN_VECTOR_DIM: {
         category: 'Memory',
         label: 'Min Vector Dimensions',
         description: 'Minimum vector dimensions after compression',
         type: 'number',
         placeholder: '64'
     },
-    OM_SUMMARY_LAYERS: {
+    MEMOS_SUMMARY_LAYERS: {
         category: 'Memory',
         label: 'Summary Layers',
         description: 'Hierarchical summary compression layers (1-3)',
         type: 'number',
         placeholder: '3'
     },
-    OM_USE_SUMMARY_ONLY: {
+    MEMOS_USE_SUMMARY_ONLY: {
         category: 'Memory',
         label: 'Summary-Only Storage',
         description: 'Store only summaries (≤300 chars) to save space',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_SUMMARY_MAX_LENGTH: {
+    MEMOS_SUMMARY_MAX_LENGTH: {
         category: 'Memory',
         label: 'Max Summary Length',
         description: 'Maximum characters in memory summaries',
         type: 'number',
         placeholder: '300'
     },
-    OM_SEG_SIZE: {
+    MEMOS_SEG_SIZE: {
         category: 'Memory',
         label: 'Segment Size',
         description: 'Memories per segment (10k recommended for optimal cache)',
         type: 'number',
         placeholder: '10000'
     },
-    OM_CACHE_SEGMENTS: {
+    MEMOS_CACHE_SEGMENTS: {
         category: 'Memory',
         label: 'Cache Segments',
         description: 'Auto-tuned by tier (FAST: 2, SMART: 3, DEEP: 5). Override if needed',
         type: 'number'
     },
-    OM_MAX_ACTIVE: {
+    MEMOS_MAX_ACTIVE: {
         category: 'Memory',
         label: 'Max Active Queries',
         description: 'Auto-tuned by tier (FAST: 32, SMART: 64, DEEP: 128). Override if needed',
         type: 'number'
     },
-    OM_AUTO_REFLECT: {
+    MEMOS_AUTO_REFLECT: {
         category: 'Features',
         label: 'Auto-Reflection',
         description: 'Automatically create reflective memories by clustering similar memories',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_REFLECT_INTERVAL: {
+    MEMOS_REFLECT_INTERVAL: {
         category: 'Features',
         label: 'Reflection Interval (min)',
         description: 'Minutes between auto-reflection runs',
         type: 'number',
         placeholder: '10'
     },
-    OM_REFLECT_MIN_MEMORIES: {
+    MEMOS_REFLECT_MIN_MEMORIES: {
         category: 'Features',
         label: 'Min Memories for Reflection',
         description: 'Minimum memories required before reflection runs',
         type: 'number',
         placeholder: '20'
     },
-    OM_COMPRESSION_ENABLED: {
+    MEMOS_COMPRESSION_ENABLED: {
         category: 'Features',
         label: 'Compression',
         description: 'Enable automatic content compression for large memories',
         type: 'select',
         options: ['true', 'false']
     },
-    OM_COMPRESSION_MIN_LENGTH: {
+    MEMOS_COMPRESSION_MIN_LENGTH: {
         category: 'Features',
         label: 'Min Compression Length',
         description: 'Minimum characters to trigger compression',
         type: 'number',
         placeholder: '100'
     },
-    OM_COMPRESSION_ALGORITHM: {
+    MEMOS_COMPRESSION_ALGORITHM: {
         category: 'Features',
         label: 'Compression Algorithm',
         description: 'Compression method: semantic, syntactic, aggressive, or auto',
         type: 'select',
         options: ['semantic', 'syntactic', 'aggressive', 'auto']
     },
-    OM_LG_NAMESPACE: {
+    MEMOS_LG_NAMESPACE: {
         category: 'LangGraph',
         label: 'Namespace',
         description: 'LangGraph namespace for memory isolation',
         type: 'text',
         placeholder: 'default'
     },
-    OM_LG_MAX_CONTEXT: {
+    MEMOS_LG_MAX_CONTEXT: {
         category: 'LangGraph',
         label: 'Max Context',
         description: 'Maximum context size for LangGraph',
         type: 'number',
         placeholder: '50'
     },
-    OM_LG_REFLECTIVE: {
+    MEMOS_LG_REFLECTIVE: {
         category: 'LangGraph',
         label: 'Reflective Mode',
         description: 'Enable reflective processing in LangGraph mode',

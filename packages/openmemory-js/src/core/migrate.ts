@@ -1,4 +1,4 @@
-import { env } from "./cfg";
+﻿import { env } from "./cfg";
 import sqlite3 from "sqlite3";
 import { Pool } from "pg";
 import {
@@ -59,13 +59,13 @@ const migrations: Migration[] = [
         ],
         postgres: [
             `ALTER TABLE {m} ADD COLUMN IF NOT EXISTS user_id TEXT`,
-            `CREATE INDEX IF NOT EXISTS openmemory_memories_user_idx ON {m}(user_id)`,
+            `CREATE INDEX IF NOT EXISTS memos_memories_user_idx ON {m}(user_id)`,
             `ALTER TABLE {v} ADD COLUMN IF NOT EXISTS user_id TEXT`,
-            `CREATE INDEX IF NOT EXISTS openmemory_vectors_user_idx ON {v}(user_id)`,
+            `CREATE INDEX IF NOT EXISTS memos_vectors_user_idx ON {v}(user_id)`,
             `ALTER TABLE {w} ADD COLUMN IF NOT EXISTS user_id TEXT`,
             `ALTER TABLE {w} DROP CONSTRAINT IF EXISTS waypoints_pkey`,
             `ALTER TABLE {w} ADD PRIMARY KEY (src_id, user_id)`,
-            `CREATE INDEX IF NOT EXISTS openmemory_waypoints_user_idx ON {w}(user_id)`,
+            `CREATE INDEX IF NOT EXISTS memos_waypoints_user_idx ON {w}(user_id)`,
             `CREATE TABLE IF NOT EXISTS {u} (
         user_id TEXT PRIMARY KEY, summary TEXT,
         reflection_count INTEGER DEFAULT 0,
@@ -88,11 +88,11 @@ const migrations: Migration[] = [
         ],
         postgres: [
             `ALTER TABLE {m} ADD COLUMN IF NOT EXISTS project_id TEXT`,
-            `CREATE INDEX IF NOT EXISTS openmemory_memories_project_idx ON {m}(project_id)`,
+            `CREATE INDEX IF NOT EXISTS memos_memories_project_idx ON {m}(project_id)`,
             `ALTER TABLE {v} ADD COLUMN IF NOT EXISTS project_id TEXT`,
-            `CREATE INDEX IF NOT EXISTS openmemory_vectors_project_idx ON {v}(project_id)`,
+            `CREATE INDEX IF NOT EXISTS memos_vectors_project_idx ON {v}(project_id)`,
             `ALTER TABLE {w} ADD COLUMN IF NOT EXISTS project_id TEXT`,
-            `CREATE INDEX IF NOT EXISTS openmemory_waypoints_project_idx ON {w}(project_id)`,
+            `CREATE INDEX IF NOT EXISTS memos_waypoints_project_idx ON {w}(project_id)`,
             `ALTER TABLE temporal_facts ADD COLUMN IF NOT EXISTS project_id TEXT`,
             `CREATE INDEX IF NOT EXISTS temporal_facts_project_idx ON temporal_facts(project_id)`,
         ],
@@ -160,13 +160,13 @@ async function check_column_exists_sqlite(
 /**
  * Resolve which vector table this SQLite database actually uses.
  * Priority:
- *   1. OM_VECTOR_TABLE if set (validated as a safe identifier).
+ *   1. MEMOS_VECTOR_TABLE if set (validated as a safe identifier).
  *   2. The legacy `vectors` table if present on disk (back-compat).
- *   3. The canonical `openmemory_vectors` default.
+ *   3. The canonical `memos_vectors` default.
  */
 async function resolveSqliteVectorTable(db: sqlite3.Database): Promise<string> {
-    const explicit = process.env.OM_VECTOR_TABLE;
-    if (explicit) return assertSafeIdentifier(explicit, "OM_VECTOR_TABLE");
+    const explicit = process.env.MEMOS_VECTOR_TABLE;
+    if (explicit) return assertSafeIdentifier(explicit, "MEMOS_VECTOR_TABLE");
 
     const tableExists = (name: string) =>
         new Promise<boolean>((ok, no) => {
@@ -227,8 +227,8 @@ async function run_sqlite_migration(
 
 function pgSchema(): string {
     return assertSafeIdentifier(
-        process.env.OM_PG_SCHEMA || "public",
-        "OM_PG_SCHEMA",
+        process.env.MEMOS_PG_SCHEMA || "public",
+        "MEMOS_PG_SCHEMA",
     );
 }
 
@@ -289,12 +289,12 @@ async function run_pg_migration(pool: Pool, m: Migration): Promise<void> {
 
     const sc = pgSchema();
     const mt = assertSafeIdentifier(
-        process.env.OM_PG_TABLE || "openmemory_memories",
-        "OM_PG_TABLE",
+        process.env.MEMOS_PG_TABLE || "memos_memories",
+        "MEMOS_PG_TABLE",
     );
     const vt = assertSafeIdentifier(
-        process.env.OM_VECTOR_TABLE || DEFAULT_VECTOR_TABLE,
-        "OM_VECTOR_TABLE",
+        process.env.MEMOS_VECTOR_TABLE || DEFAULT_VECTOR_TABLE,
+        "MEMOS_VECTOR_TABLE",
     );
     const has_user_id = await check_column_exists_pg(pool, mt, "user_id");
 
@@ -309,8 +309,8 @@ async function run_pg_migration(pool: Pool, m: Migration): Promise<void> {
     const replacements: Record<string, string> = {
         "{m}": `"${sc}"."${mt}"`,
         "{v}": `"${sc}"."${vt}"`,
-        "{w}": `"${sc}"."openmemory_waypoints"`,
-        "{u}": `"${sc}"."openmemory_users"`,
+        "{w}": `"${sc}"."memos_waypoints"`,
+        "{u}": `"${sc}"."memos_users"`,
     };
 
     for (let sql of m.postgres) {
@@ -398,16 +398,16 @@ export async function run_migrations() {
     if (is_pg) {
         const ssl = resolvePgSsl(process.env);
         const db_name = assertSafeIdentifier(
-            process.env.OM_PG_DB || "openmemory",
-            "OM_PG_DB",
+            process.env.MEMOS_PG_DB || "Memos",
+            "MEMOS_PG_DB",
         );
 
         const pool = new Pool({
-            host: process.env.OM_PG_HOST,
-            port: process.env.OM_PG_PORT ? +process.env.OM_PG_PORT : undefined,
+            host: process.env.MEMOS_PG_HOST,
+            port: process.env.MEMOS_PG_PORT ? +process.env.MEMOS_PG_PORT : undefined,
             database: db_name,
-            user: process.env.OM_PG_USER,
-            password: process.env.OM_PG_PASSWORD,
+            user: process.env.MEMOS_PG_USER,
+            password: process.env.MEMOS_PG_PASSWORD,
             ssl,
         });
 
@@ -424,7 +424,7 @@ export async function run_migrations() {
 
         await pool.end();
     } else {
-        const db_path = process.env.OM_DB_PATH || "./data/openmemory.sqlite";
+        const db_path = process.env.MEMOS_DB_PATH || "./data/Memos.sqlite";
         const db = new sqlite3.Database(db_path);
 
         const current = await get_db_version_sqlite(db);

@@ -1,8 +1,8 @@
-# Memos
+﻿# Memos
 
 Memos is a local-first memory workspace for storing, searching, and reviewing long-term context. It includes a TypeScript API server and a Next.js dashboard for browsing memories, checking system health, and querying stored context through a chat-style interface.
 
-This repository is a customized student-managed fork of the OpenMemory project. The demo focuses on local setup, dashboard wiring, SQLite-backed storage, project-scoped memory views, and a cleaned developer workflow.
+This repository is a customized student-managed fork of the Memos project. The demo focuses on local setup, dashboard wiring, SQLite-backed storage, project-scoped memory views, and a cleaned developer workflow.
 
 ## Features
 
@@ -29,15 +29,15 @@ Use two PowerShell terminals.
 ### 1. Backend
 
 ```powershell
-cd packages\openmemory-js
+cd packages\memos-js
 
-$env:OM_PORT="8080"
-$env:OM_TIER="hybrid"
-$env:OM_EMBEDDINGS="synthetic"
-$env:OM_METADATA_BACKEND="sqlite"
-$env:OM_VECTOR_BACKEND="sqlite"
+$env:MEMOS_PORT="8080"
+$env:MEMOS_TIER="hybrid"
+$env:MEMOS_EMBEDDINGS="synthetic"
+$env:MEMOS_METADATA_BACKEND="sqlite"
+$env:MEMOS_VECTOR_BACKEND="sqlite"
 $root = Resolve-Path ..\..
-$env:OM_DB_PATH="$root\data\memos.sqlite"
+$env:MEMOS_DB_PATH="$root\data\memos.sqlite"
 
 npm install
 npm run dev
@@ -84,4 +84,4 @@ GET  /memory/all
 
 ## Attribution
 
-Memos is based on OpenMemory by CaviraOSS and remains under the original Apache 2.0 license. See `LICENSE` and `ATTRIBUTION.md`.
+Memos is based on Memos by CaviraOSS and remains under the original Apache 2.0 license. See `LICENSE` and `ATTRIBUTION.md`.

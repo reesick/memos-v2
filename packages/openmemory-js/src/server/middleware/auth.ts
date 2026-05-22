@@ -1,16 +1,16 @@
-import { env } from "../../core/cfg";
+﻿import { env } from "../../core/cfg";
 import crypto from "crypto";
 
 /**
  * SECURITY: Authentication is fail-closed by default.
  *
- *  - In production (NODE_ENV=production) OR when OM_REQUIRE_AUTH=true,
- *    a missing OM_API_KEY causes every protected request to return 503.
+ *  - In production (NODE_ENV=production) OR when MEMOS_REQUIRE_AUTH=true,
+ *    a missing MEMOS_API_KEY causes every protected request to return 503.
  *    We do not crash the process here (the server may still serve
  *    public health endpoints), but no protected route is reachable.
- *  - In development (NODE_ENV !== "production" AND OM_REQUIRE_AUTH != "true"),
- *    a missing OM_API_KEY produces a loud console.error on every request
- *    and still rejects with 503 unless OM_DEV_ALLOW_NO_AUTH=true is set
+ *  - In development (NODE_ENV !== "production" AND MEMOS_REQUIRE_AUTH != "true"),
+ *    a missing MEMOS_API_KEY produces a loud console.error on every request
+ *    and still rejects with 503 unless MEMOS_DEV_ALLOW_NO_AUTH=true is set
  *    explicitly. This avoids the previous fail-open behaviour where any
  *    caller could read every tenant's data.
  *
@@ -31,12 +31,12 @@ const rate_limit_store = new Map<
 
 const REQUIRE_AUTH =
     process.env.NODE_ENV === "production" ||
-    process.env.OM_REQUIRE_AUTH === "true";
+    process.env.MEMOS_REQUIRE_AUTH === "true";
 
 const DEV_ALLOW_NO_AUTH =
     process.env.NODE_ENV !== "production" &&
-    process.env.OM_REQUIRE_AUTH !== "true" &&
-    process.env.OM_DEV_ALLOW_NO_AUTH === "true";
+    process.env.MEMOS_REQUIRE_AUTH !== "true" &&
+    process.env.MEMOS_DEV_ALLOW_NO_AUTH === "true";
 
 const auth_config = {
     api_key: env.api_key,
@@ -55,19 +55,19 @@ const auth_config = {
 if (!auth_config.api_key) {
     if (REQUIRE_AUTH) {
         console.error(
-            "[AUTH] FATAL: OM_API_KEY is not set but OM_REQUIRE_AUTH or NODE_ENV=production is in effect. " +
-                "All protected endpoints will return 503 until OM_API_KEY is configured.",
+            "[AUTH] FATAL: MEMOS_API_KEY is not set but MEMOS_REQUIRE_AUTH or NODE_ENV=production is in effect. " +
+                "All protected endpoints will return 503 until MEMOS_API_KEY is configured.",
         );
     } else if (DEV_ALLOW_NO_AUTH) {
         console.error(
-            "[AUTH] WARNING: OM_API_KEY is not set and OM_DEV_ALLOW_NO_AUTH=true. " +
+            "[AUTH] WARNING: MEMOS_API_KEY is not set and MEMOS_DEV_ALLOW_NO_AUTH=true. " +
                 "Auth is DISABLED — every request runs as the synthetic 'dev-no-auth' tenant. " +
                 "Do NOT use this mode in production.",
         );
     } else {
         console.error(
-            "[AUTH] WARNING: OM_API_KEY is not set. Protected endpoints will return 503. " +
-                "Set OM_API_KEY=... in .env, or set OM_DEV_ALLOW_NO_AUTH=true to bypass auth in dev.",
+            "[AUTH] WARNING: MEMOS_API_KEY is not set. Protected endpoints will return 503. " +
+                "Set MEMOS_API_KEY=... in .env, or set MEMOS_DEV_ALLOW_NO_AUTH=true to bypass auth in dev.",
         );
     }
 }
@@ -152,7 +152,7 @@ export function authenticate_api_request(req: any, res: any, next: any) {
         return res.status(503).json({
             error: "auth_not_configured",
             message:
-                "Server has no OM_API_KEY configured. Protected endpoints are unavailable.",
+                "Server has no MEMOS_API_KEY configured. Protected endpoints are unavailable.",
         });
     }
 

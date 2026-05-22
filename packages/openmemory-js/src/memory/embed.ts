@@ -2,7 +2,7 @@
 import { get_model } from "../core/models";
 import { sector_configs } from "./hsg";
 import { q } from "../core/db";
-import { canonical_tokens_from_text, add_synonym_tokens } from "../utils/text";
+import { canonical_tokens_frMEMOS_text, add_synonym_tokens } from "../utils/text";
 import {
     BedrockRuntimeClient,
     InvokeModelCommand,
@@ -11,7 +11,7 @@ import {
 let gem_q: Promise<any> = Promise.resolve();
 export const emb_dim = () => env.vec_dim;
 
-const EMBED_TIMEOUT_MS = Number(process.env.OM_EMBED_TIMEOUT_MS) || 30000;
+const EMBED_TIMEOUT_MS = Number(process.env.MEMOS_EMBED_TIMEOUT_MS) || 30000;
 async function fetchWithTimeout(
     url: string,
     options: RequestInit,
@@ -503,7 +503,7 @@ const norm_v = (v: Float32Array) => {
 export function gen_syn_emb(t: string, s: string): number[] {
     const d = env.vec_dim || 768,
         v = new Float32Array(d).fill(0),
-        ct = canonical_tokens_from_text(t);
+        ct = canonical_tokens_frMEMOS_text(t);
     if (!ct.length) {
         const x = 1 / Math.sqrt(d);
         return Array.from({ length: d }, () => x);

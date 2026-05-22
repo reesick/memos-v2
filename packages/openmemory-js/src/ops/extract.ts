@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+﻿import { exec } from "child_process";
 import { promisify } from "util";
 import mammoth from "mammoth";
 import * as fs from "fs";
@@ -111,7 +111,7 @@ export async function extractAudio(
     buffer: Buffer,
     mimeType: string,
 ): Promise<ExtractionResult> {
-    const apiKey = process.env.OPENAI_API_KEY || process.env.OM_OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.MEMOS_OPENAI_API_KEY;
     if (!apiKey) {
         throw new Error(
             "OpenAI API key required for audio transcription. Set OPENAI_API_KEY in .env",

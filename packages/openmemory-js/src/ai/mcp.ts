@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from "http";
+﻿import type { IncomingMessage, ServerResponse } from "http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -84,7 +84,7 @@ const uid = (val?: string | null) => (val?.trim() ? val.trim() : undefined);
 export const create_mcp_srv = () => {
     const srv = new McpServer(
         {
-            name: "openmemory-mcp",
+            name: "Memos-mcp",
             version: "2.1.0",
         },
         { capabilities: { tools: {}, resources: {}, logging: {} } },
@@ -93,8 +93,8 @@ export const create_mcp_srv = () => {
     const registry = new ToolRegistry();
 
     registry.tool(
-        "openmemory_query",
-        "Query OpenMemory for contextual memories (HSG) and/or temporal facts",
+        "memos_query",
+        "Query Memos for contextual memories (HSG) and/or temporal facts",
         {
             query: z
                 .string()
@@ -294,7 +294,7 @@ export const create_mcp_srv = () => {
     );
 
     registry.tool(
-        "openmemory_store_project",
+        "memos_store_project",
         "Persist new content scoped to a SPECIFIC PROJECT. Use this for design decisions, code patterns, or business logic that is unique to this project. If unsure if the content is project-specific vs global, YOU MUST ASK THE USER for clarification.",
         {
             content: z.string().min(1).describe("Raw memory text to store"),
@@ -450,10 +450,10 @@ export const create_mcp_srv = () => {
         },
     );
 
-    // PROPOSAL: Consider renaming this tool to openmemory_store_global in the future to distinguish from project-specific storage.
-    // The current name 'openmemory_store' is kept for architectural compatibility.
+    // PROPOSAL: Consider renaming this tool to memos_store_global in the future to distinguish from project-specific storage.
+    // The current name 'memos_store' is kept for architectural compatibility.
     registry.tool(
-        "openmemory_store",
+        "memos_store",
         "Persist new content as GLOBAL KNOWLEDGE. Use this for general coding best practices, common library knowledge, or universal system concepts. If unsure if the content is global vs project-specific, YOU MUST ASK THE USER for clarification.",
         {
             content: z.string().min(1).describe("Raw memory text to store"),
@@ -559,7 +559,7 @@ export const create_mcp_srv = () => {
     );
 
     registry.tool(
-        "openmemory_reinforce",
+        "memos_reinforce",
         "Boost salience for an existing memory",
         {
             id: z.string().min(1).describe("Memory identifier to reinforce"),
@@ -584,7 +584,7 @@ export const create_mcp_srv = () => {
     );
 
     registry.tool(
-        "openmemory_delete",
+        "memos_delete",
         "Delete a memory by identifier",
         {
             id: z.string().min(1).describe("Memory identifier to delete"),
@@ -648,7 +648,7 @@ export const create_mcp_srv = () => {
     );
 
     registry.tool(
-        "openmemory_list",
+        "memos_list",
         "List recent memories for quick inspection",
         {
             limit: z
@@ -732,7 +732,7 @@ export const create_mcp_srv = () => {
     );
 
     registry.tool(
-        "openmemory_get",
+        "memos_get",
         "Fetch a single memory by identifier",
         {
             id: z.string().min(1).describe("Memory identifier to load"),
@@ -794,12 +794,12 @@ export const create_mcp_srv = () => {
     registry.apply(srv);
 
     srv.resource(
-        "openmemory-config",
-        "openmemory://config",
+        "Memos-config",
+        "Memos://config",
         {
             mimeType: "application/json",
             description:
-                "Runtime configuration snapshot for the OpenMemory MCP server",
+                "Runtime configuration snapshot for the Memos MCP server",
         },
         async () => {
             const stats = await all_async(
@@ -812,18 +812,18 @@ export const create_mcp_srv = () => {
                 embeddings: getEmbeddingInfo(),
                 server: { version: "2.1.0", protocol: "2025-06-18" },
                 available_tools: [
-                    "openmemory_query",
-                    "openmemory_store_project",
-                    "openmemory_store",
-                    "openmemory_reinforce",
-                    "openmemory_list",
-                    "openmemory_get",
+                    "memos_query",
+                    "memos_store_project",
+                    "memos_store",
+                    "memos_reinforce",
+                    "memos_list",
+                    "memos_get",
                 ],
             };
             return {
                 contents: [
                     {
-                        uri: "openmemory://config",
+                        uri: "Memos://config",
                         text: JSON.stringify(pay, null, 2),
                     },
                 ],

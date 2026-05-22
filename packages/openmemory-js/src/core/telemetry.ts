@@ -1,7 +1,7 @@
-import os from "node:os";
+﻿import os from "node:os";
 import { env } from "./cfg";
 
-const DISABLED = (process.env.OM_TELEMETRY ?? "").toLowerCase() === "false";
+const DISABLED = (process.env.MEMOS_TELEMETRY ?? "").toLowerCase() === "false";
 const gatherVersion = (): string => {
     if (process.env.npm_package_version) return process.env.npm_package_version;
     try {

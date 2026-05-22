@@ -1,4 +1,4 @@
-import { run_async, get_async, all_async } from "../core/db";
+﻿import { run_async, get_async, all_async } from "../core/db";
 import { env } from "../core/cfg";
 import { TemporalFact, TemporalEdge } from "./types";
 import { randomUUID } from "crypto";
@@ -76,7 +76,7 @@ const _insert_fact_impl = async (
 ): Promise<string> => {
     const id = randomUUID();
     const now = Date.now();
-    const valid_from_ts = valid_from.getTime();
+    const valid_frMEMOS_ts = valid_from.getTime();
 
     const existing = await all_async(
         `
@@ -93,13 +93,13 @@ const _insert_fact_impl = async (
     );
 
     for (const old of existing) {
-        if (old.valid_from < valid_from_ts) {
+        if (old.valid_from < valid_frMEMOS_ts) {
             await run_async(
                 `UPDATE temporal_facts SET valid_to = ? WHERE id = ?`,
-                [valid_from_ts - 1, old.id],
+                [valid_frMEMOS_ts - 1, old.id],
             );
             console.error(
-                `[TEMPORAL] Closed fact ${old.id} at ${new Date(valid_from_ts - 1).toISOString()}`,
+                `[TEMPORAL] Closed fact ${old.id} at ${new Date(valid_frMEMOS_ts - 1).toISOString()}`,
             );
         }
     }
@@ -116,7 +116,7 @@ const _insert_fact_impl = async (
             subject,
             predicate,
             object,
-            valid_from_ts,
+            valid_frMEMOS_ts,
             confidence,
             now,
             metadata ? JSON.stringify(metadata) : null,
@@ -188,7 +188,7 @@ export const insert_edge = async (
     metadata?: Record<string, any>,
 ): Promise<string> => {
     const id = randomUUID();
-    const valid_from_ts = valid_from.getTime();
+    const valid_frMEMOS_ts = valid_from.getTime();
 
     await run_async(
         `
@@ -200,7 +200,7 @@ export const insert_edge = async (
             source_id,
             target_id,
             relation_type,
-            valid_from_ts,
+            valid_frMEMOS_ts,
             weight,
             metadata ? JSON.stringify(metadata) : null,
         ],

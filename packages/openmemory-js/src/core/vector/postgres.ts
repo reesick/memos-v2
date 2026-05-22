@@ -1,4 +1,4 @@
-import { VectorStore } from "../vector_store";
+﻿import { VectorStore } from "../vector_store";
 import {
     bufferToVector,
     vectorToBuffer,
@@ -22,13 +22,13 @@ export class PostgresVectorStore implements VectorStore {
         usePgVector: boolean = false,
     ) {
         // Accept either a bare identifier (validated here) or an
-        // already-quoted, schema-qualified form like `"public"."openmemory_vectors"`
+        // already-quoted, schema-qualified form like `"public"."memos_vectors"`
         // that the db.ts initializer assembles after its own validation.
         // We detect the quoted form by the presence of a leading double quote.
         if (tableName.startsWith('"')) {
             this.table = tableName;
         } else {
-            this.table = assertSafeIdentifier(tableName, "OM_VECTOR_TABLE");
+            this.table = assertSafeIdentifier(tableName, "MEMOS_VECTOR_TABLE");
         }
         this.usePgVector = usePgVector;
         console.error(

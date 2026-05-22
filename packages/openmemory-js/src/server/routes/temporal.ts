@@ -1,4 +1,4 @@
-import {
+﻿import {
     insert_fact,
     update_fact,
     invalidate_fact,
@@ -104,7 +104,7 @@ export const create_temporal_fact = async (req: any, res: any) => {
     const vf = parse_date(b.valid_from);
     if (!vf.ok)
         return res.status(400).json({ error: "invalid valid_from date" });
-    const valid_from_date = vf.date ?? new Date();
+    const valid_frMEMOS_date = vf.date ?? new Date();
     const conf =
         b.confidence !== undefined
             ? Math.max(0, Math.min(1, b.confidence))
@@ -117,7 +117,7 @@ export const create_temporal_fact = async (req: any, res: any) => {
             subject: b.subject,
             predicate: b.predicate,
             object: b.object,
-            valid_from: valid_from_date,
+            valid_from: valid_frMEMOS_date,
             confidence: conf,
             metadata: b.metadata,
             user_id: tenant,
@@ -128,7 +128,7 @@ export const create_temporal_fact = async (req: any, res: any) => {
             subject: b.subject,
             predicate: b.predicate,
             object: b.object,
-            valid_from: valid_from_date.toISOString(),
+            valid_from: valid_frMEMOS_date.toISOString(),
             confidence: conf,
             user_id: tenant,
             project_id: project_id ?? null,
@@ -285,15 +285,15 @@ export const get_predicate_history = async (req: any, res: any) => {
                 .status(400)
                 .json({ error: "Predicate parameter is required" });
 
-        const from_p = parse_date(req.query.from);
+        const frMEMOS_p = parse_date(req.query.from);
         const to_p = parse_date(req.query.to);
-        if (!from_p.ok)
+        if (!frMEMOS_p.ok)
             return res.status(400).json({ error: "invalid from date" });
         if (!to_p.ok) return res.status(400).json({ error: "invalid to date" });
 
         const timeline_raw = await get_predicate_timeline(
             predicate,
-            from_p.date,
+            frMEMOS_p.date,
             to_p.date,
         );
         const timeline = timeline_raw.filter((entry: any) => {
@@ -303,7 +303,7 @@ export const get_predicate_history = async (req: any, res: any) => {
 
         res.json({
             predicate,
-            from: from_p.date?.toISOString(),
+            from: frMEMOS_p.date?.toISOString(),
             to: to_p.date?.toISOString(),
             timeline,
             count: timeline.length,
@@ -500,11 +500,11 @@ export const apply_decay = async (req: any, res: any) => {
     const tenant = require_tenant(req, res);
     if (!tenant) return;
     // Decay is a global maintenance action; require an explicit admin flag.
-    if (process.env.OM_ADMIN_DECAY !== "true") {
+    if (process.env.MEMOS_ADMIN_DECAY !== "true") {
         return res.status(403).json({
             error: "admin_only",
             message:
-                "set OM_ADMIN_DECAY=true to enable confidence decay over global facts",
+                "set MEMOS_ADMIN_DECAY=true to enable confidence decay over global facts",
         });
     }
     const b = parse_or_400<{ decay_rate?: number }>(

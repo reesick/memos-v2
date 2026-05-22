@@ -1,12 +1,12 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 
 /**
- * Build the `ssl` option for a `pg.Pool` based on `OM_PG_SSL`.
+ * Build the `ssl` option for a `pg.Pool` based on `MEMOS_PG_SSL`.
  *
  * Modes:
  *   - "verify-full" (default in production): TLS with full certificate
  *     verification (Node's default `rejectUnauthorized: true`). Uses the
- *     system CA trust store unless `OM_PG_SSL_CA` points at a CA file.
+ *     system CA trust store unless `MEMOS_PG_SSL_CA` points at a CA file.
  *   - "require": TLS, but accept any certificate (rejectUnauthorized: false).
  *     Logs a WARN — this is the legacy behavior and should only be used
  *     against trusted networks (e.g. private VPC).
@@ -25,7 +25,7 @@ let warnedRequire = false;
 export function resolvePgSsl(
     env: NodeJS.ProcessEnv = process.env,
 ): PgSslConfig {
-    const raw = (env.OM_PG_SSL ?? "").trim().toLowerCase();
+    const raw = (env.MEMOS_PG_SSL ?? "").trim().toLowerCase();
     const mode =
         raw || (env.NODE_ENV === "production" ? "verify-full" : "disable");
 
@@ -36,8 +36,8 @@ export function resolvePgSsl(
     if (mode === "require") {
         if (!warnedRequire) {
             console.warn(
-                "[OpenMemory][PG][SSL] OM_PG_SSL=require: TLS enabled WITHOUT certificate verification. " +
-                    "Use OM_PG_SSL=verify-full for production deployments.",
+                "[Memos][PG][SSL] MEMOS_PG_SSL=require: TLS enabled WITHOUT certificate verification. " +
+                    "Use MEMOS_PG_SSL=verify-full for production deployments.",
             );
             warnedRequire = true;
         }
@@ -45,14 +45,14 @@ export function resolvePgSsl(
     }
 
     if (mode === "verify-full") {
-        const caPath = env.OM_PG_SSL_CA;
+        const caPath = env.MEMOS_PG_SSL_CA;
         if (caPath) {
             try {
                 const ca = fs.readFileSync(caPath, "utf8");
                 return { rejectUnauthorized: true, ca };
             } catch (e: any) {
                 throw new Error(
-                    `[OpenMemory][PG][SSL] Failed to read OM_PG_SSL_CA at ${caPath}: ${e?.message || e}`,
+                    `[Memos][PG][SSL] Failed to read MEMOS_PG_SSL_CA at ${caPath}: ${e?.message || e}`,
                 );
             }
         }
@@ -61,7 +61,7 @@ export function resolvePgSsl(
     }
 
     throw new Error(
-        `[OpenMemory][PG][SSL] Unknown OM_PG_SSL value: ${JSON.stringify(raw)}. ` +
+        `[Memos][PG][SSL] Unknown MEMOS_PG_SSL value: ${JSON.stringify(raw)}. ` +
             `Expected one of: verify-full, require, disable.`,
     );
 }

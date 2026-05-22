@@ -1,4 +1,4 @@
-/**
+﻿/**
  * sources webhook routes - ingest data from external sources via HTTP
  *
  * POST /sources/:source/ingest
@@ -46,7 +46,7 @@ export function src(app: any) {
             usage: {
                 ingest: "POST /sources/:source/ingest { creds: {}, filters: {} }",
                 webhook:
-                    "POST /sources/webhook/:source (HMAC-SHA256 signed via OM_<SOURCE>_WEBHOOK_SECRET)",
+                    "POST /sources/webhook/:source (HMAC-SHA256 signed via MEMOS_<SOURCE>_WEBHOOK_SECRET)",
             },
         });
     });
@@ -93,7 +93,7 @@ export function src(app: any) {
     });
 
     app.post("/sources/webhook/github", async (req: any, res: any) => {
-        const secret = process.env.OM_GITHUB_WEBHOOK_SECRET;
+        const secret = process.env.MEMOS_GITHUB_WEBHOOK_SECRET;
         if (!secret) {
             return res
                 .status(503)
@@ -163,7 +163,7 @@ export function src(app: any) {
     });
 
     app.post("/sources/webhook/notion", async (req: any, res: any) => {
-        const secret = process.env.OM_NOTION_WEBHOOK_SECRET;
+        const secret = process.env.MEMOS_NOTION_WEBHOOK_SECRET;
         if (!secret) {
             // Notion's public API does not currently document a verified
             // webhook signature scheme. We require an explicit shared

@@ -1,4 +1,4 @@
-import { q, vector_store } from "../../core/db";
+﻿import { q, vector_store } from "../../core/db";
 import { p } from "../../utils";
 import {
     update_user_summary,
@@ -60,7 +60,7 @@ export const usr = (app: any) => {
      * Bulk regenerate. This is an admin-style endpoint — keep it
      * tenant-scoped (regenerate only the caller's summary). If a future
      * deployment needs a global admin to regenerate all tenants, gate
-     * that behind an explicit OM_ADMIN_KEY check; do NOT re-open this
+     * that behind an explicit MEMOS_ADMIN_KEY check; do NOT re-open this
      * route to all callers.
      */
     app.post("/users/summaries/regenerate-all", async (req: any, res: any) => {
@@ -69,8 +69,8 @@ export const usr = (app: any) => {
         try {
             // Backwards-compat shape: kept the route name, but it now only
             // updates the authenticated tenant. Multi-tenant fan-out is
-            // explicitly opt-in via OM_ADMIN_REGENERATE_ALL=true.
-            if (process.env.OM_ADMIN_REGENERATE_ALL === "true") {
+            // explicitly opt-in via MEMOS_ADMIN_REGENERATE_ALL=true.
+            if (process.env.MEMOS_ADMIN_REGENERATE_ALL === "true") {
                 const result = await auto_update_user_summaries();
                 return res.json({
                     ok: true,

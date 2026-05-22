@@ -1,11 +1,11 @@
-# Memos Chat Setup
+﻿# Memos Chat Setup
 
 The chat interface connects to the Memos backend and queries local memories in real time.
 
 ## Start Backend
 
 ```powershell
-cd packages/openmemory-js
+cd packages/memos-js
 npm install
 npm run dev
 ```

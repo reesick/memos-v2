@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Backend = Join-Path $Root "packages\openmemory-js"
+$Backend = Join-Path $Root "packages\memos-js"
 $DataDir = Join-Path $Root "data"
 $LogDir = Join-Path $Root "logs"
 $DbPath = Join-Path $DataDir "memos.sqlite"
@@ -22,18 +22,17 @@ if (Test-MemosHealth) {
 }
 
 if (-not (Test-Path -LiteralPath (Join-Path $Backend "node_modules\.bin\tsx.cmd"))) {
-    throw "Backend dependencies are missing. Run npm install in packages\openmemory-js."
+    throw "Backend dependencies are missing. Run npm install in packages\memos-js."
 }
 
 New-Item -ItemType Directory -Force -Path $DataDir, $LogDir | Out-Null
 
-$env:OPENMEMORY_URL = "http://127.0.0.1:8080"
-$env:OM_PORT = "8080"
-$env:OM_DB_PATH = $DbPath
-$env:OM_TIER = "hybrid"
-$env:OM_EMBEDDINGS = "synthetic"
-$env:OM_METADATA_BACKEND = "sqlite"
-$env:OM_VECTOR_BACKEND = "sqlite"
+$env:MEMOS_PORT = "8080"
+$env:MEMOS_DB_PATH = $DbPath
+$env:MEMOS_TIER = "hybrid"
+$env:MEMOS_EMBEDDINGS = "synthetic"
+$env:MEMOS_METADATA_BACKEND = "sqlite"
+$env:MEMOS_VECTOR_BACKEND = "sqlite"
 $env:NO_COLOR = "1"
 
 Start-Process `

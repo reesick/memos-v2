@@ -1,4 +1,4 @@
-# Memos Dashboard
+﻿# Memos Dashboard
 
 Next.js dashboard for the Memos local memory workspace.
 
@@ -13,4 +13,4 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Start the backend first from `packages/openmemory-js`.
+Start the backend first from `packages/memos-js`.

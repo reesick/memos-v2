@@ -1,5 +1,5 @@
-/**
- * base source class for openmemory data sources - production grade
+﻿/**
+ * base source class for Memos data sources - production grade
  *
  * features:
  * - custom exception hierarchy

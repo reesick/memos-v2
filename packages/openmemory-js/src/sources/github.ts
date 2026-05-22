@@ -1,5 +1,5 @@
-/**
- * github source for openmemory - production grade
+﻿/**
+ * github source for Memos - production grade
  * requires: @octokit/rest
  * env vars: GITHUB_TOKEN
  */

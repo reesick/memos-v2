@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+﻿import crypto from "node:crypto";
 
 const syn_grps = [
     ["prefer", "like", "love", "enjoy", "favor"],
@@ -81,7 +81,7 @@ export const canonicalize_token = (tok: string): string => {
     return cmap.get(st) || st;
 };
 
-export const canonical_tokens_from_text = (text: string): string[] => {
+export const canonical_tokens_frMEMOS_text = (text: string): string[] => {
     const res: string[] = [];
     for (const tok of tokenize(text)) {
         const can = canonicalize_token(tok);
@@ -98,7 +98,7 @@ export const synonyms_for = (tok: string): Set<string> => {
 };
 
 export const build_search_doc = (text: string): string => {
-    const can = canonical_tokens_from_text(text);
+    const can = canonical_tokens_frMEMOS_text(text);
     const exp = new Set<string>();
     for (const tok of can) {
         exp.add(tok);
@@ -111,14 +111,14 @@ export const build_search_doc = (text: string): string => {
 };
 
 export const build_fts_query = (text: string): string => {
-    const can = canonical_tokens_from_text(text);
+    const can = canonical_tokens_frMEMOS_text(text);
     if (!can.length) return "";
     const uniq = Array.from(new Set(can.filter((t) => t.length > 1)));
     return uniq.map((t) => `"${t}"`).join(" OR ");
 };
 
 export const canonical_token_set = (text: string): Set<string> => {
-    return new Set(canonical_tokens_from_text(text));
+    return new Set(canonical_tokens_frMEMOS_text(text));
 };
 
 export const stable_text_fallback_hash = (text: string): string => {

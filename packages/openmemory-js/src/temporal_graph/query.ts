@@ -1,4 +1,4 @@
-import { get_async, all_async } from "../core/db";
+﻿import { get_async, all_async } from "../core/db";
 import { TemporalFact, TemporalQuery, TimelineEntry } from "./types";
 
 export const query_facts_at_time = async (opts: {
@@ -142,12 +142,12 @@ export const query_facts_in_range = async (opts: {
     const params: any[] = [];
 
     if (from && to) {
-        const from_ts = from.getTime();
+        const frMEMOS_ts = from.getTime();
         const to_ts = to.getTime();
         conditions.push(
             "((valid_from <= ? AND (valid_to IS NULL OR valid_to >= ?)) OR (valid_from >= ? AND valid_from <= ?))",
         );
-        params.push(to_ts, from_ts, from_ts, to_ts);
+        params.push(to_ts, frMEMOS_ts, frMEMOS_ts, to_ts);
     } else if (from) {
         conditions.push("valid_from >= ?");
         params.push(from.getTime());

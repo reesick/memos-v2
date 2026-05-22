@@ -1,5 +1,5 @@
-/**
- * google slides source for openmemory - production grade
+﻿/**
+ * google slides source for Memos - production grade
  * requires: googleapis
  * env vars: GOOGLE_SERVICE_ACCOUNT_FILE or GOOGLE_CREDENTIALS_JSON
  */

@@ -1,4 +1,4 @@
-import { q } from "../../core/db";
+﻿import { q } from "../../core/db";
 import {
     calculateDynamicSalienceWithTimeDecay,
     calculateCrossSectorResonanceScore,
@@ -65,24 +65,24 @@ export function dynroutes(app: any) {
             try {
                 const incoming_request_body_payload =
                     incoming_http_request.body;
-                const initial_salience_value_from_request =
+                const initial_salience_value_frMEMOS_request =
                     incoming_request_body_payload.initial_salience || 0.5;
-                const lambda_decay_constant_from_request =
+                const lambda_decay_constant_frMEMOS_request =
                     incoming_request_body_payload.decay_lambda || 0.01;
-                const recall_reinforcement_count_from_request =
+                const recall_reinforcement_count_frMEMOS_request =
                     incoming_request_body_payload.recall_count || 0;
-                const emotional_frequency_metric_from_request =
+                const emotional_frequency_metric_frMEMOS_request =
                     incoming_request_body_payload.emotional_frequency || 0;
-                const time_elapsed_in_days_from_request =
+                const time_elapsed_in_days_frMEMOS_request =
                     incoming_request_body_payload.time_elapsed_days || 0;
 
                 const calculated_dynamic_salience_result =
                     await calculateDynamicSalienceWithTimeDecay(
-                        initial_salience_value_from_request,
-                        lambda_decay_constant_from_request,
-                        recall_reinforcement_count_from_request,
-                        emotional_frequency_metric_from_request,
-                        time_elapsed_in_days_from_request,
+                        initial_salience_value_frMEMOS_request,
+                        lambda_decay_constant_frMEMOS_request,
+                        recall_reinforcement_count_frMEMOS_request,
+                        emotional_frequency_metric_frMEMOS_request,
+                        time_elapsed_in_days_frMEMOS_request,
                     );
 
                 outgoing_http_response.json({
@@ -90,12 +90,12 @@ export function dynroutes(app: any) {
                     calculated_salience_value:
                         calculated_dynamic_salience_result,
                     input_parameters_used: {
-                        initial_salience: initial_salience_value_from_request,
-                        decay_lambda: lambda_decay_constant_from_request,
-                        recall_count: recall_reinforcement_count_from_request,
+                        initial_salience: initial_salience_value_frMEMOS_request,
+                        decay_lambda: lambda_decay_constant_frMEMOS_request,
+                        recall_count: recall_reinforcement_count_frMEMOS_request,
                         emotional_frequency:
-                            emotional_frequency_metric_from_request,
-                        time_elapsed_days: time_elapsed_in_days_from_request,
+                            emotional_frequency_metric_frMEMOS_request,
+                        time_elapsed_days: time_elapsed_in_days_frMEMOS_request,
                     },
                 });
             } catch (unexpected_error_during_salience_calculation) {
@@ -114,18 +114,18 @@ export function dynroutes(app: any) {
             try {
                 const incoming_request_body_payload =
                     incoming_http_request.body;
-                const memory_sector_type_from_request =
+                const memory_sector_type_frMEMOS_request =
                     incoming_request_body_payload.memory_sector || "semantic";
-                const query_sector_type_from_request =
+                const query_sector_type_frMEMOS_request =
                     incoming_request_body_payload.query_sector || "semantic";
-                const base_cosine_similarity_from_request =
+                const base_cosine_similarity_frMEMOS_request =
                     incoming_request_body_payload.base_similarity || 0.8;
 
                 const calculated_cross_sector_resonance_score =
                     await calculateCrossSectorResonanceScore(
-                        memory_sector_type_from_request,
-                        query_sector_type_from_request,
-                        base_cosine_similarity_from_request,
+                        memory_sector_type_frMEMOS_request,
+                        query_sector_type_frMEMOS_request,
+                        base_cosine_similarity_frMEMOS_request,
                     );
 
                 outgoing_http_response.json({
@@ -133,9 +133,9 @@ export function dynroutes(app: any) {
                     resonance_modulated_score:
                         calculated_cross_sector_resonance_score,
                     input_parameters_used: {
-                        memory_sector: memory_sector_type_from_request,
-                        query_sector: query_sector_type_from_request,
-                        base_similarity: base_cosine_similarity_from_request,
+                        memory_sector: memory_sector_type_frMEMOS_request,
+                        query_sector: query_sector_type_frMEMOS_request,
+                        base_similarity: base_cosine_similarity_frMEMOS_request,
                     },
                 });
             } catch (unexpected_error_during_resonance_calculation) {
@@ -154,15 +154,15 @@ export function dynroutes(app: any) {
             try {
                 const incoming_request_body_payload =
                     incoming_http_request.body;
-                const query_text_content_from_request =
+                const query_text_content_frMEMOS_request =
                     incoming_request_body_payload.query;
-                const query_sector_type_from_request =
+                const query_sector_type_frMEMOS_request =
                     incoming_request_body_payload.sector || "semantic";
-                const minimum_energy_threshold_from_request =
+                const minimum_energy_threshold_frMEMOS_request =
                     incoming_request_body_payload.min_energy ||
                     TAU_ENERGY_THRESHOLD_FOR_RETRIEVAL;
 
-                if (!query_text_content_from_request) {
+                if (!query_text_content_frMEMOS_request) {
                     return outgoing_http_response
                         .status(400)
                         .json({ err: "query_required" });
@@ -170,23 +170,23 @@ export function dynroutes(app: any) {
 
                 const { embedForSector } = await import("../../memory/embed");
                 const query_vector_embedding_array = await embedForSector(
-                    query_text_content_from_request,
-                    query_sector_type_from_request,
+                    query_text_content_frMEMOS_request,
+                    query_sector_type_frMEMOS_request,
                 );
 
                 const retrieved_memories_with_energy_scores =
                     await retrieveMemoriesWithEnergyThresholding(
                         query_vector_embedding_array,
-                        query_sector_type_from_request,
-                        minimum_energy_threshold_from_request,
+                        query_sector_type_frMEMOS_request,
+                        minimum_energy_threshold_frMEMOS_request,
                     );
 
                 outgoing_http_response.json({
                     success_status_indicator: true,
-                    query_text: query_text_content_from_request,
-                    query_sector: query_sector_type_from_request,
+                    query_text: query_text_content_frMEMOS_request,
+                    query_sector: query_sector_type_frMEMOS_request,
                     minimum_energy_threshold:
-                        minimum_energy_threshold_from_request,
+                        minimum_energy_threshold_frMEMOS_request,
                     retrieved_memories_count:
                         retrieved_memories_with_energy_scores.length,
                     memories_with_activation_energy:
@@ -218,45 +218,45 @@ export function dynroutes(app: any) {
             try {
                 const incoming_request_body_payload =
                     incoming_http_request.body;
-                const target_memory_id_from_request =
+                const target_memory_id_frMEMOS_request =
                     incoming_request_body_payload.memory_id;
 
-                if (!target_memory_id_from_request) {
+                if (!target_memory_id_frMEMOS_request) {
                     return outgoing_http_response
                         .status(400)
                         .json({ err: "memory_id_required" });
                 }
 
-                const memory_record_from_database = await q.get_mem.get(
-                    target_memory_id_from_request,
+                const memory_record_frMEMOS_database = await q.get_mem.get(
+                    target_memory_id_frMEMOS_request,
                 );
-                if (!memory_record_from_database) {
+                if (!memory_record_frMEMOS_database) {
                     return outgoing_http_response
                         .status(404)
                         .json({ err: "memory_not_found" });
                 }
 
                 const current_salience_before_reinforcement =
-                    memory_record_from_database.salience;
+                    memory_record_frMEMOS_database.salience;
                 const updated_salience_after_reinforcement =
                     await applyRetrievalTraceReinforcementToMemory(
-                        target_memory_id_from_request,
+                        target_memory_id_frMEMOS_request,
                         current_salience_before_reinforcement,
                     );
 
                 await q.upd_seen.run(
-                    target_memory_id_from_request,
+                    target_memory_id_frMEMOS_request,
                     Date.now(),
                     updated_salience_after_reinforcement,
                     Date.now(),
                 );
 
-                const connected_waypoints_from_database =
+                const connected_waypoints_frMEMOS_database =
                     await q.get_waypoints_by_src.all(
-                        target_memory_id_from_request,
+                        target_memory_id_frMEMOS_request,
                     );
                 const linked_nodes_with_weights_array =
-                    connected_waypoints_from_database.map(
+                    connected_waypoints_frMEMOS_database.map(
                         (waypoint_record: any) => ({
                             target_id: waypoint_record.dst_id,
                             weight: waypoint_record.weight,
@@ -265,7 +265,7 @@ export function dynroutes(app: any) {
 
                 const propagated_reinforcement_updates_list =
                     await propagateAssociativeReinforcementToLinkedNodes(
-                        target_memory_id_from_request,
+                        target_memory_id_frMEMOS_request,
                         updated_salience_after_reinforcement,
                         linked_nodes_with_weights_array,
                     );
@@ -281,7 +281,7 @@ export function dynroutes(app: any) {
 
                 outgoing_http_response.json({
                     success_status_indicator: true,
-                    reinforced_memory_id: target_memory_id_from_request,
+                    reinforced_memory_id: target_memory_id_frMEMOS_request,
                     previous_salience_value:
                         current_salience_before_reinforcement,
                     updated_salience_value:
@@ -309,14 +309,14 @@ export function dynroutes(app: any) {
             try {
                 const incoming_request_body_payload =
                     incoming_http_request.body;
-                const initial_memory_ids_array_from_request =
+                const initial_memory_ids_array_frMEMOS_request =
                     incoming_request_body_payload.initial_memory_ids || [];
-                const maximum_spreading_iterations_from_request =
+                const maximum_spreading_iterations_frMEMOS_request =
                     incoming_request_body_payload.max_iterations || 3;
 
                 if (
-                    !Array.isArray(initial_memory_ids_array_from_request) ||
-                    initial_memory_ids_array_from_request.length === 0
+                    !Array.isArray(initial_memory_ids_array_frMEMOS_request) ||
+                    initial_memory_ids_array_frMEMOS_request.length === 0
                 ) {
                     return outgoing_http_response
                         .status(400)
@@ -325,8 +325,8 @@ export function dynroutes(app: any) {
 
                 const spreading_activation_results_map =
                     await performSpreadingActivationRetrieval(
-                        initial_memory_ids_array_from_request,
-                        maximum_spreading_iterations_from_request,
+                        initial_memory_ids_array_frMEMOS_request,
+                        maximum_spreading_iterations_frMEMOS_request,
                     );
 
                 const activation_results_as_array = Array.from(
@@ -345,9 +345,9 @@ export function dynroutes(app: any) {
                 outgoing_http_response.json({
                     success_status_indicator: true,
                     initial_activated_memories_count:
-                        initial_memory_ids_array_from_request.length,
+                        initial_memory_ids_array_frMEMOS_request.length,
                     maximum_iterations_performed:
-                        maximum_spreading_iterations_from_request,
+                        maximum_spreading_iterations_frMEMOS_request,
                     total_activated_nodes_count:
                         activation_results_as_array.length,
                     spreading_activation_results: activation_results_as_array,
@@ -366,12 +366,12 @@ export function dynroutes(app: any) {
         "/dynamics/waypoints/graph",
         async (incoming_http_request: any, outgoing_http_response: any) => {
             try {
-                const waypoint_graph_structure_from_database =
+                const waypoint_graph_structure_frMEMOS_database =
                     await buildAssociativeWaypointGraphFromMemories();
 
                 const graph_statistics_summary = {
                     total_nodes_in_graph:
-                        waypoint_graph_structure_from_database.size,
+                        waypoint_graph_structure_frMEMOS_database.size,
                     total_edges_across_all_nodes: 0,
                     average_edges_per_node: 0,
                     nodes_with_no_connections: 0,
@@ -382,7 +382,7 @@ export function dynroutes(app: any) {
                 for (const [
                     memory_node_identifier,
                     node_data_structure,
-                ] of waypoint_graph_structure_from_database) {
+                ] of waypoint_graph_structure_frMEMOS_database) {
                     const number_of_outgoing_edges =
                         node_data_structure.connected_waypoint_edges.length;
                     graph_statistics_summary.total_edges_across_all_nodes +=
@@ -435,14 +435,14 @@ export function dynroutes(app: any) {
             try {
                 const incoming_request_body_payload =
                     incoming_http_request.body;
-                const source_memory_id_from_request =
+                const source_memory_id_frMEMOS_request =
                     incoming_request_body_payload.source_memory_id;
-                const target_memory_id_from_request =
+                const target_memory_id_frMEMOS_request =
                     incoming_request_body_payload.target_memory_id;
 
                 if (
-                    !source_memory_id_from_request ||
-                    !target_memory_id_from_request
+                    !source_memory_id_frMEMOS_request ||
+                    !target_memory_id_frMEMOS_request
                 ) {
                     return outgoing_http_response
                         .status(400)
@@ -450,10 +450,10 @@ export function dynroutes(app: any) {
                 }
 
                 const source_memory_record = await q.get_mem.get(
-                    source_memory_id_from_request,
+                    source_memory_id_frMEMOS_request,
                 );
                 const target_memory_record = await q.get_mem.get(
-                    target_memory_id_from_request,
+                    target_memory_id_frMEMOS_request,
                 );
 
                 if (!source_memory_record || !target_memory_record) {
@@ -493,8 +493,8 @@ export function dynroutes(app: any) {
 
                 outgoing_http_response.json({
                     success_status_indicator: true,
-                    source_memory_identifier: source_memory_id_from_request,
-                    target_memory_identifier: target_memory_id_from_request,
+                    source_memory_identifier: source_memory_id_frMEMOS_request,
+                    target_memory_identifier: target_memory_id_frMEMOS_request,
                     calculated_link_weight_value:
                         calculated_waypoint_link_weight,
                     time_gap_in_days:

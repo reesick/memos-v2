@@ -1,4 +1,4 @@
-import { q, all_async, run_async } from "../../core/db";
+﻿import { q, all_async, run_async } from "../../core/db";
 import { env } from "../../core/cfg";
 import * as fs from "fs";
 import * as path from "path";
@@ -7,8 +7,8 @@ const is_pg = env.metadata_backend === "postgres";
 
 const get_mem_table = () => {
     if (is_pg) {
-        const sc = process.env.OM_PG_SCHEMA || "public";
-        const tbl = process.env.OM_PG_TABLE || "openmemory_memories";
+        const sc = process.env.MEMOS_PG_SCHEMA || "public";
+        const tbl = process.env.MEMOS_PG_TABLE || "memos_memories";
         return `"${sc}"."${tbl}"`;
     }
     return "memories";
@@ -22,7 +22,7 @@ let reqz = {
 
 const log_metric = async (type: string, value: number) => {
     try {
-        const sc = process.env.OM_PG_SCHEMA || "public";
+        const sc = process.env.MEMOS_PG_SCHEMA || "public";
         const sql = is_pg
             ? `insert into "${sc}"."stats"(type,count,ts) values($1,$2,$3)`
             : "insert into stats(type,count,ts) values(?,?,?)";
@@ -67,7 +67,7 @@ export function req_tracker_mw() {
 const get_db_sz = async (): Promise<number> => {
     try {
         if (is_pg) {
-            const db_name = process.env.OM_PG_DB || "openmemory";
+            const db_name = process.env.MEMOS_PG_DB || "Memos";
             const result = await all_async(
                 `SELECT pg_database_size('${db_name}') as size`,
             );
@@ -161,7 +161,7 @@ export function dash(app: any) {
             const upt = process.uptime();
 
             const hour_ago = Date.now() - 60 * 60 * 1000;
-            const sc = process.env.OM_PG_SCHEMA || "public";
+            const sc = process.env.MEMOS_PG_SCHEMA || "public";
             const qps_data = await all_async(
                 is_pg
                     ? `SELECT count, ts FROM "${sc}"."stats" WHERE type=$1 AND ts > $2 ORDER BY ts DESC`
@@ -419,7 +419,7 @@ export function dash(app: any) {
         try {
             const hrs = parseInt(req.query.hours || "24");
             const strt = Date.now() - hrs * 60 * 60 * 1000;
-            const sc = process.env.OM_PG_SCHEMA || "public";
+            const sc = process.env.MEMOS_PG_SCHEMA || "public";
 
             const ops = await all_async(
                 is_pg
