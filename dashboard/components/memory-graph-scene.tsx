@@ -187,7 +187,7 @@ function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: strin
                         {/* @ts-ignore */}
                         <bufferAttribute attach="attributes-position" args={[dimPositions, 3]} />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#ffffff" transparent opacity={0.55} />
+                    <lineBasicMaterial color="#ffffff" transparent opacity={1} depthWrite={false} />
                 {/* @ts-ignore */}
                 </lineSegments>
             )}
@@ -198,7 +198,7 @@ function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: strin
                         {/* @ts-ignore */}
                         <bufferAttribute attach="attributes-position" args={[hlPositions, 3]} />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#ffffff" transparent opacity={0.9} />
+                    <lineBasicMaterial color="#ffffff" transparent opacity={1} depthWrite={false} />
                 {/* @ts-ignore */}
                 </lineSegments>
             )}
