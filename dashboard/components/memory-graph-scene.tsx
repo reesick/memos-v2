@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { OrbitControls, Text, Line } from "@react-three/drei"
+import { Canvas, useFrame } from "@react-three/fiber"
+import { OrbitControls, Html } from "@react-three/drei"
 import * as THREE from "three"
 import { API_BASE_URL, getHeaders } from "@/lib/api"
 
@@ -38,15 +38,7 @@ const SECTOR_CENTERS: Record<string, [number, number, number]> = {
     reflective: [5,   -5,   -2],
 }
 
-const SECTOR_LABELS: Record<string, string> = {
-    semantic:   "SEMANTIC",
-    episodic:   "EPISODIC",
-    procedural: "PROCEDURAL",
-    emotional:  "EMOTIONAL",
-    reflective: "REFLECTIVE",
-}
-
-// ── seeded deterministic jitter so layout is stable across renders ─────────────
+// ── seeded deterministic jitter ────────────────────────────────────────────────
 function seededRandom(seed: number) {
     let s = seed
     return () => {
@@ -62,8 +54,8 @@ function computePositions(memories: Memory[]): Node3D[] {
         const si = sectorIndex[m.primary_sector] || 0
         sectorIndex[m.primary_sector] = si + 1
         const rng = seededRandom(i * 7919 + si * 131)
-        // Fibonacci sphere distribution within cluster
-        const phi = Math.acos(1 - 2 * (si + 0.5) / Math.max(memories.filter(x => x.primary_sector === m.primary_sector).length, 1))
+        const total = Math.max(memories.filter(x => x.primary_sector === m.primary_sector).length, 1)
+        const phi = Math.acos(1 - 2 * (si + 0.5) / total)
         const theta = Math.PI * (1 + Math.sqrt(5)) * si
         const r = 2.8 + rng() * 0.8
         const x = center[0] + r * Math.sin(phi) * Math.cos(theta)
@@ -96,9 +88,7 @@ function MemNode({
         if (!mesh.current) return
         const s = mesh.current.scale.x
         mesh.current.scale.setScalar(s + (targetScale - s) * Math.min(delta * 8, 1))
-        if (selected) {
-            mesh.current.rotation.y += delta * 1.2
-        }
+        if (selected) mesh.current.rotation.y += delta * 1.2
     })
 
     return (
@@ -123,31 +113,34 @@ function MemNode({
     )
 }
 
-// ── cluster label ──────────────────────────────────────────────────────────────
+// ── cluster labels via Html ────────────────────────────────────────────────────
 function ClusterLabel({ sector, visible }: { sector: string; visible: boolean }) {
     const center = SECTOR_CENTERS[sector] || [0, 0, 0]
     const color = SECTOR_COLORS[sector] || "#888"
-    const label = SECTOR_LABELS[sector] || sector.toUpperCase()
     if (!visible) return null
     return (
-        <Text
-            position={[center[0], center[1] + 4.2, center[2]]}
-            fontSize={0.55}
-            color={color}
-            anchorX="center"
-            anchorY="middle"
-            characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        <Html
+            position={[center[0], center[1] + 4.4, center[2]]}
+            center
+            style={{ pointerEvents: "none" }}
         >
-            {label}
-        </Text>
+            <div style={{
+                color,
+                fontSize: "10px",
+                fontWeight: 700,
+                letterSpacing: "3px",
+                whiteSpace: "nowrap",
+                textShadow: `0 0 12px ${color}88`,
+                userSelect: "none",
+            }}>
+                {sector.toUpperCase()}
+            </div>
+        </Html>
     )
 }
 
-// ── connections between nodes ──────────────────────────────────────────────────
+// ── connections via lineSegments ───────────────────────────────────────────────
 function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: string | null }) {
-    const byId = useMemo(() => Object.fromEntries(nodes.map(n => [n.id, n])), [nodes])
-
-    // pair up memories in the same sector that are near each other (top 40 pairs)
     const pairs = useMemo(() => {
         const result: Array<[Node3D, Node3D]> = []
         const bySector: Record<string, Node3D[]> = {}
@@ -157,33 +150,63 @@ function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: strin
         }
         for (const sector of Object.keys(bySector)) {
             const sn = bySector[sector]
-            for (let i = 0; i < sn.length && result.length < 60; i++) {
-                if (i + 1 < sn.length) result.push([sn[i], sn[i + 1]])
+            for (let i = 0; i + 1 < sn.length && result.length < 60; i++) {
+                result.push([sn[i], sn[i + 1]])
             }
         }
         return result
     }, [nodes])
 
+    const { dimPositions, hlPositions, hlColor } = useMemo(() => {
+        const dim: number[] = []
+        const hl: number[] = []
+        let hlCol = "#38bdf8"
+        for (const [a, b] of pairs) {
+            const highlighted = selectedId && (a.id === selectedId || b.id === selectedId)
+            const arr = [...a.position, ...b.position]
+            if (highlighted) {
+                hl.push(...arr)
+                hlCol = SECTOR_COLORS[a.primary_sector] || "#38bdf8"
+            } else {
+                dim.push(...arr)
+            }
+        }
+        return {
+            dimPositions: new Float32Array(dim),
+            hlPositions: new Float32Array(hl),
+            hlColor: hlCol,
+        }
+    }, [pairs, selectedId])
+
     return (
         <>
-            {pairs.map(([a, b], i) => {
-                const isHighlighted = selectedId && (a.id === selectedId || b.id === selectedId)
-                return (
-                    <Line
-                        key={i}
-                        points={[a.position, b.position]}
-                        color={isHighlighted ? SECTOR_COLORS[a.primary_sector] : "#333"}
-                        lineWidth={isHighlighted ? 1.5 : 0.5}
-                        transparent
-                        opacity={isHighlighted ? 0.8 : 0.2}
-                    />
-                )
-            })}
+            {dimPositions.length > 0 && (
+                // @ts-ignore
+                <lineSegments>
+                    <bufferGeometry>
+                        {/* @ts-ignore */}
+                        <bufferAttribute attach="attributes-position" args={[dimPositions, 3]} />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#333333" transparent opacity={0.25} />
+                {/* @ts-ignore */}
+                </lineSegments>
+            )}
+            {hlPositions.length > 0 && (
+                // @ts-ignore
+                <lineSegments>
+                    <bufferGeometry>
+                        {/* @ts-ignore */}
+                        <bufferAttribute attach="attributes-position" args={[hlPositions, 3]} />
+                    </bufferGeometry>
+                    <lineBasicMaterial color={hlColor} transparent opacity={0.8} />
+                {/* @ts-ignore */}
+                </lineSegments>
+            )}
         </>
     )
 }
 
-// ── auto-rotate camera on idle ─────────────────────────────────────────────────
+// ── auto-rotate on idle ────────────────────────────────────────────────────────
 function AutoRotate({ enabled }: { enabled: boolean }) {
     useFrame((state, delta) => {
         if (!enabled) return
@@ -193,7 +216,7 @@ function AutoRotate({ enabled }: { enabled: boolean }) {
     return null
 }
 
-// ── the 3D scene ───────────────────────────────────────────────────────────────
+// ── scene ──────────────────────────────────────────────────────────────────────
 function Scene({
     nodes,
     selectedId,
@@ -211,8 +234,8 @@ function Scene({
 }) {
     const [interacting, setInteracting] = useState(false)
 
-    const filtered = useMemo(() =>
-        nodes.filter(n => visibleSectors.has(n.primary_sector)),
+    const filtered = useMemo(
+        () => nodes.filter(n => visibleSectors.has(n.primary_sector)),
         [nodes, visibleSectors]
     )
 
@@ -256,8 +279,9 @@ function Scene({
 
             {filtered.map(node => {
                 const isSelected = node.id === selectedId
-                const isDimmed = (matchedIds !== null && !matchedIds.has(node.id)) ||
-                                 (selectedId !== null && !isSelected)
+                const isDimmed =
+                    (matchedIds !== null && !matchedIds.has(node.id)) ||
+                    (selectedId !== null && !isSelected)
                 return (
                     <MemNode
                         key={node.id}
@@ -273,7 +297,7 @@ function Scene({
     )
 }
 
-// ── info panel (right sidebar overlay) ────────────────────────────────────────
+// ── info panel ─────────────────────────────────────────────────────────────────
 function InfoPanel({ node, onClose }: { node: Node3D; onClose: () => void }) {
     const color = SECTOR_COLORS[node.primary_sector] || "#888"
     const age = Math.floor((Date.now() - node.created_at) / 86400000)
@@ -371,7 +395,7 @@ function SectorFilters({
     )
 }
 
-// ── main exported component ────────────────────────────────────────────────────
+// ── main ───────────────────────────────────────────────────────────────────────
 export default function MemoryGraphScene() {
     const [memories, setMemories] = useState<Memory[]>([])
     const [nodes, setNodes] = useState<Node3D[]>([])
@@ -390,7 +414,7 @@ export default function MemoryGraphScene() {
                 const r = await fetch(`${API_BASE_URL}/memory/all?l=500`, { headers: getHeaders() })
                 if (!r.ok) throw new Error(`${r.status}`)
                 const data = await r.json()
-                const mems: Memory[] = (data.items || [])
+                const mems: Memory[] = data.items || []
                 setMemories(mems)
                 setNodes(computePositions(mems))
             } catch (e: any) {
@@ -432,7 +456,7 @@ export default function MemoryGraphScene() {
     if (nodes.length === 0) return (
         <div className="flex flex-col items-center justify-center h-full gap-3 text-stone-400">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-12 h-12 opacity-30">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-9 5.25-9-5.25v-2.25l9-5.25 9 5.25Z" />
             </svg>
             <p className="text-sm">No memories yet. Add some via the Memories page or seed script.</p>
         </div>
@@ -440,7 +464,7 @@ export default function MemoryGraphScene() {
 
     return (
         <div className="relative w-full h-full" style={{ cursor: "crosshair" }}>
-            {/* search bar */}
+            {/* search */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-72">
                 <input
                     value={search}
@@ -458,19 +482,16 @@ export default function MemoryGraphScene() {
                 )}
             </div>
 
-            {/* sector filters */}
             <SectorFilters visible={visibleSectors} counts={sectorCounts} onToggle={toggleSector} />
 
-            {/* stats badge */}
             <div className="absolute bottom-4 left-4 text-xs text-stone-600 bg-stone-950/70 rounded-xl px-3 py-1.5 border border-stone-900">
                 {memories.length} memories · drag to rotate · scroll to zoom · click to inspect
             </div>
 
-            {/* 3D canvas */}
             <Canvas
                 camera={{ position: [0, 4, 22], fov: 55 }}
                 gl={{ antialias: true, alpha: false }}
-                style={{ background: "transparent" }}
+                style={{ background: "#000000" }}
                 onPointerMissed={() => setSelected(null)}
             >
                 <Scene
@@ -483,13 +504,8 @@ export default function MemoryGraphScene() {
                 />
             </Canvas>
 
-            {/* hover tooltip */}
             {hovered && !selected && <Tooltip node={hovered} />}
-
-            {/* selected memory panel */}
-            {selected && (
-                <InfoPanel node={selected} onClose={() => setSelected(null)} />
-            )}
+            {selected && <InfoPanel node={selected} onClose={() => setSelected(null)} />}
         </div>
     )
 }
