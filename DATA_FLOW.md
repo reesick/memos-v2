@@ -295,6 +295,151 @@ Top-K memories returned (+ salience reinforced)
 
 ---
 
+## How Classification Works
+
+Every memory gets auto-classified into a sector before it's stored. The classifier runs pure regex pattern matching — no ML model, no API call, instant.
+
+### The algorithm (`hsg.ts: classify_content`)
+
+```
+Input text: "I felt really anxious about the demo today!!"
+
+Step 1 — score each sector by counting regex matches × sector weight:
+  episodic:   2 matches (today, demo) × 1.2 = 2.4
+  semantic:   0 matches               × 1.0 = 0
+  procedural: 0 matches               × 1.1 = 0
+  emotional:  3 matches (felt, anxious, !!) × 1.3 = 3.9  ← highest
+  reflective: 0 matches               × 0.8 = 0
+
+Step 2 — pick primary = highest scoring sector = "emotional"
+
+Step 3 — any sector that scored ≥ 30% of the winner becomes "additional":
+  threshold = 3.9 × 0.3 = 1.17
+  episodic scored 2.4 > 1.17 → added as additional
+
+Step 4 — confidence = primaryScore / (primaryScore + 2nd + 1)
+  = 3.9 / (3.9 + 2.4 + 1) = 0.53
+
+Result: { primary: "emotional", additional: ["episodic"], confidence: 0.53 }
+```
+
+### What patterns each sector matches
+
+| Sector | Weight | Decay/day | Trigger words / patterns |
+|--------|--------|-----------|--------------------------|
+| `semantic` | 1.0 | 0.005 | "is a", "defined as", concept, fact, statistic, history, science, know, understand |
+| `episodic` | 1.2 | 0.015 | today, yesterday, last week, "remember when", went, saw, met, visited, at 3:00, on Monday |
+| `procedural` | 1.1 | 0.008 | how to, step by step, install, run, deploy, click, press, method, function, "to do" |
+| `emotional` | 1.3 | 0.020 | feel, felt, happy, sad, angry, love, hate, amazing, terrible, frustrated, !!! |
+| `reflective` | 0.8 | 0.001 | realize, insight, think, pattern, lesson, takeaway, improve, feedback, analysis |
+
+**You can override:** pass `"metadata": { "sector": "episodic" }` in the add request and classification is skipped entirely.
+
+### Why sector matters for retrieval
+
+Each sector has a different decay rate — reflective memories (insight, patterns) decay almost never (`0.001/day`), while emotional ones fade faster (`0.02/day`). During search, the query itself gets classified and sector-matching memories get boosted. Cross-sector relationships also apply:
+
+```
+semantic ──0.8──► procedural    (facts help find how-tos)
+episodic ──0.8──► reflective    (events connect to insights)
+emotional ──0.7──► episodic     (feelings link to past events)
+```
+
+---
+
+## How Embeddings Are Made
+
+### Synthetic embeddings (default, no API needed)
+
+In `hybrid` and `fast` tiers, Memos uses a hand-built embedding function (`gen_syn_emb` in `embed.ts`). Zero external calls, runs in ~1–2ms on CPU.
+
+**The algorithm step by step:**
+
+```
+Input: "I prefer TypeScript over JavaScript", sector: "semantic"
+
+1. Tokenize + canonicalize
+   → ["prefer", "typescript", "javascript", "type", "safety"]
+   → synonyms added: ["ts", "js", ...] (via synonym table)
+
+2. Compute TF-IDF weight per token
+   tf  = count / total_tokens
+   idf = log(1 + total_tokens / count)
+   w   = (tf × idf + 1) × sector_weight[sector]
+         ↑ sector_weight["semantic"] = 1.0
+
+3. Hash each token into the 1536-dim vector using FNV-1a hash:
+   add_feat(vec, 1536, "semantic|tok|typescript", w)
+     → vec[fnv(key) % 1536] += w
+     → vec[murmur(key) % 1536] += w × 0.5   (secondary slot)
+
+4. Add character n-grams (partial match support):
+   trigrams:  "typ", "ype", "pes" → add_feat(..., w × 0.4)
+   4-grams:   "type", "ypes"     → add_feat(..., w × 0.3)
+
+5. Add bigrams and trigrams of word sequence:
+   "prefer_typescript" → add_feat(..., 1.4 × w)
+   "typescript_javascript" → add_feat(..., 1.4 × w)
+   "prefer_typescript_javascript" → add_feat(..., 1.0 × w)
+
+6. Add skip-grams (non-adjacent word pairs):
+   "prefer_javascript" (skipping "typescript") → add_feat(..., 0.7 × w)
+
+7. Encode word positions (like transformer positional encoding):
+   pos=0: vec[0] += sin(0) × 0.5/log(6)
+   pos=1: vec[1] += sin(1/10000^(2/1536)) × ...
+
+8. Encode length + vocabulary density as global features:
+   len_bucket = floor(log2(token_count + 1))
+   dens_bucket = floor(unique_tokens/total_tokens × 10)
+
+9. L2-normalize the whole vector → unit length
+   → final: 1536 float32 values, dot-product comparable
+```
+
+**Why 5 vectors per memory?**
+
+The same text is embedded once per sector (5 times total). Each embedding uses a different sector prefix for the hash keys:
+- `"semantic|tok|typescript"` → different hash → different position in the 1536-dim space
+- `"emotional|tok|typescript"` → different position
+
+This means the same word has a different "location" in semantic space vs emotional space. When you query "how do I feel about TypeScript?", the emotional-space search finds memories where TypeScript co-occurs with feeling words, not just all TypeScript memories.
+
+### What gets stored in SQLite
+
+```sql
+-- metadata table (memos)
+id, content, primary_sector, salience, decay_lambda,
+tags (JSON), meta (JSON), created_at, updated_at, last_seen_at
+
+-- vector table (vectors)
+id, sector, vector (BLOB: 1536 × float32 = 6144 bytes per row)
+-- 5 rows per memory (one per sector)
+```
+
+### Embedding providers by tier
+
+| Tier | What's used | Dimensions | Notes |
+|------|-------------|-----------|-------|
+| `hybrid` | Synthetic (always) | 1536 | BM25 + TF-IDF hashing, no API |
+| `fast` | Synthetic (always) | 1536 | Same as hybrid, no BM25 boost |
+| `smart` | Synthetic 256-dim + provider 128-dim fused | 384 | Fused: 60% synthetic + 40% external |
+| `deep` | External provider only | 1536 | Full semantic embedding, requires API |
+
+**External providers supported:** OpenAI (`text-embedding-3-small/large`), Gemini (`gemini-embedding-001`), Ollama (any local model), AWS Bedrock Titan, Siray — all with automatic fallback chain.
+
+### How similarity is computed at query time
+
+```
+query vector (1536-dim)  ·  memory vector (1536-dim)
+─────────────────────────────────────────────────────  = cosine similarity (0.0 – 1.0)
+       |query|    ×    |memory|
+```
+
+Since both vectors are L2-normalized, this is just a dot product — fast even at scale.
+
+---
+
 ## Key Config (`.env`)
 
 | Variable | Default | What it does |
