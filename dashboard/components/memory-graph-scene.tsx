@@ -187,7 +187,7 @@ function Connections({ nodes, selectedId }: { nodes: Node3D[]; selectedId: strin
                         {/* @ts-ignore */}
                         <bufferAttribute attach="attributes-position" args={[dimPositions, 3]} />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#ffffff" transparent opacity={0.15} />
+                    <lineBasicMaterial color="#ffffff" transparent opacity={0.55} />
                 {/* @ts-ignore */}
                 </lineSegments>
             )}
@@ -490,8 +490,8 @@ export default function MemoryGraphScene() {
 
             <Canvas
                 camera={{ position: [0, 4, 22], fov: 55 }}
-                gl={{ antialias: true, alpha: false }}
-                style={{ background: "#000000" }}
+                gl={{ antialias: true, alpha: true }}
+                style={{ background: "transparent" }}
                 onPointerMissed={() => setSelected(null)}
             >
                 <Scene
